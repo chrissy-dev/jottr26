@@ -230,9 +230,8 @@ body {
 }
 
 /* The buttons and trail that float over the top of the page: the line they
-   sit on, level with the sidebar's settings button, which is centred on the
-   Jottr wordmark a few pixels below the header's padding — 3.6px, and 3.2px
-   with a touch screen's larger text. */
+   sit on, a few pixels below the top padding — 3.6px, and 3.2px with a touch
+   screen's larger text. */
 @utility float-top {
   top: calc(max(0.5rem, env(safe-area-inset-top)) + 3.6px);
   @media (pointer: coarse) {

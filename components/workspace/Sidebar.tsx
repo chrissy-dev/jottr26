@@ -35,14 +35,6 @@ export function Sidebar({
 
   return (
     <div className="sidebar-tones flex h-full flex-col bg-sidebar">
-      {/* The line is the height the settings button used to give it, which the
-          page's floating buttons still line up with. */}
-      <header className="px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <span className="block truncate px-2 text-[17px] font-semibold leading-8 tracking-[-0.01em] text-ink pointer-coarse:text-[19px] pointer-coarse:leading-9">
-          Jottr
-        </span>
-      </header>
-
       {/* Clicking the empty space under the list closes the open page, the
           trash or the settings. Rows, and the menus they portal out of this
           element, bubble through here too, so only a click that landed on the
@@ -55,7 +47,7 @@ export function Sidebar({
           if (event.clientX - bounds.left >= event.currentTarget.clientWidth) return
           onOpen(null)
         }}
-        className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4"
+        className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-[max(0.5rem,env(safe-area-inset-top))]"
       >
         <SectionLabel>Pages</SectionLabel>
         {tree.length === 0 ? (
