@@ -50,7 +50,7 @@ async function flagEdited(ids: string | string[], patch: Partial<Pick<PageRow, P
     })
 }
 
-export function siblingsOf(parentId: string): Promise<PageRow[]> {
+function siblingsOf(parentId: string): Promise<PageRow[]> {
   return liveChildren(db(), parentId)
 }
 

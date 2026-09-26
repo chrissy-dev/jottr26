@@ -587,7 +587,9 @@ export class SyncEngine {
   }
 
   private async refreshPending(patch: Partial<SyncStatus> = {}) {
-    const pending = await countPending(this.db)
+    // Fire-and-forget from timers and save hooks, so it must not reject: a
+    // database closed under it, as on sign-out, keeps the last count.
+    const pending = await countPending(this.db).catch(() => this.status.pending)
 
     // 'synced' claims everything on this device is on the server, so it can
     // only be told from 'pending' once the dirty rows have been counted — and
