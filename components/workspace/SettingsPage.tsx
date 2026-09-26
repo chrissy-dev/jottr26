@@ -59,7 +59,7 @@ export function SettingsPage() {
       <SectionLabel>Appearance</SectionLabel>
       <ThemeRow />
 
-      <SectionLabel>Sync</SectionLabel>
+      <SectionLabel>Sync status</SectionLabel>
       <SyncStatusRow onRetry={() => void retrySync.startSync()} />
       {retrySync.overlay}
 
@@ -77,14 +77,14 @@ function ThemeRow() {
   return (
     <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)]">
       <span className="flex-1 text-ink">Theme</span>
-      <div className="-mr-0.5 flex rounded-lg border border-line p-0.5">
+      <div className="flex rounded-md border border-line p-px">
         {THEMES.map(({ value, label }) => (
           <button
             key={value}
             type="button"
             aria-pressed={theme === value}
             onClick={() => setTheme(value)}
-            className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors pointer-coarse:py-1.5 pointer-coarse:text-[14px] ${
+            className={`rounded-[5px] px-2 py-0.5 text-[12.5px] font-medium transition-colors pointer-coarse:py-1 pointer-coarse:text-[13.5px] ${
               theme === value ? 'bg-[var(--selected)] text-ink' : 'text-muted hover:bg-[var(--hover)] hover:text-ink'
             }`}
           >
