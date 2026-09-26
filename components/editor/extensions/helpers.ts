@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/core'
+import { createChainableState, type Editor } from '@tiptap/core'
 import { Fragment, type Node } from '@tiptap/pm/model'
 import { Selection, TextSelection, type Command, type EditorState, type Transaction } from '@tiptap/pm/state'
 
@@ -21,18 +21,11 @@ export function replacingSelection(command: Command): Command {
     if (selection.empty || !(selection instanceof TextSelection) || !selection.$from.sameParent(selection.$to)) {
       return command(state, dispatch, view)
     }
+    // One transaction throughout: the state handed on reads its document and
+    // selection from it, and hands it back as its own `tr`, so the command's
+    // steps land after the deletion and dispatching it dispatches both.
     const tr = state.tr.deleteSelection()
-    return command(
-      state.apply(tr),
-      dispatch &&
-        ((next) => {
-          for (const step of next.steps) tr.step(step)
-          tr.setSelection(Selection.fromJSON(tr.doc, next.selection.toJSON()))
-          if (next.scrolledIntoView) tr.scrollIntoView()
-          dispatch(tr)
-        }),
-      view,
-    )
+    return command(createChainableState({ state, transaction: tr }), dispatch && (() => dispatch(tr)), view)
   }
 }
 
