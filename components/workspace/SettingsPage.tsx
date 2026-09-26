@@ -31,10 +31,30 @@ export function SettingsPage() {
       <h1 className="page-title">Settings</h1>
 
       <SectionLabel>Account</SectionLabel>
-      <p className="flex items-center gap-2 py-2 text-[length:var(--body-size)] text-ink">
+      <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)] text-ink">
         <Icon name="user" size={15} className="shrink-0 text-faint" />
-        <span className="min-w-0 [overflow-wrap:anywhere]">{session?.user.email}</span>
-      </p>
+        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{session?.user.email}</span>
+        <button
+          type="button"
+          onClick={() => {
+            // Signing out erases the local copy, so unsynced work has to be
+            // called out rather than quietly discarded.
+            if (
+              status.pending > 0 &&
+              !window.confirm(
+                `${status.pending} ${status.pending === 1 ? 'page has' : 'pages have'} changes that haven't reached your account yet. Signing out now will discard them. Continue?`,
+              )
+            ) {
+              return
+            }
+            void signOut()
+          }}
+          className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-danger transition-colors hover:bg-[var(--hover)] pointer-coarse:py-2 pointer-coarse:text-[14px]"
+        >
+          <Icon name="logout" size={14} />
+          Sign out
+        </button>
+      </div>
 
       <SectionLabel>Appearance</SectionLabel>
       <ThemeRow />
@@ -42,27 +62,6 @@ export function SettingsPage() {
       <SectionLabel>Sync</SectionLabel>
       <SyncStatusRow onRetry={() => void retrySync.startSync()} />
       {retrySync.overlay}
-
-      <button
-        type="button"
-        onClick={() => {
-          // Signing out erases the local copy, so unsynced work has to be
-          // called out rather than quietly discarded.
-          if (
-            status.pending > 0 &&
-            !window.confirm(
-              `${status.pending} ${status.pending === 1 ? 'page has' : 'pages have'} changes that haven't reached your account yet. Signing out now will discard them. Continue?`,
-            )
-          ) {
-            return
-          }
-          void signOut()
-        }}
-        className="mt-8 flex items-center gap-2 font-medium text-danger hover:underline pointer-coarse:py-2"
-      >
-        <Icon name="logout" size={15} />
-        Sign out
-      </button>
 
       {/* The build this device is running, which the service worker swaps for
           a new deploy's on a later load. */}
