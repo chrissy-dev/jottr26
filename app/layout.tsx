@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { SITE_URL } from '@/lib/util/site'
+import { THEME_COLORS, THEME_SCRIPT } from '@/lib/util/themeScript'
 
 export const metadata: Metadata = {
   metadataBase: SITE_URL,
@@ -24,15 +25,19 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fcfbf7' },
-    { media: '(prefers-color-scheme: dark)', color: '#1f1f1d' },
+    { media: '(prefers-color-scheme: light)', color: THEME_COLORS.light },
+    { media: '(prefers-color-scheme: dark)', color: THEME_COLORS.dark },
   ],
   colorScheme: 'light dark',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // The script sets the theme on this element before React sees it.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   )
