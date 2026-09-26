@@ -9,7 +9,15 @@ import {
   type Transaction,
 } from '@tiptap/pm/state'
 import type { EditorView, NodeView, ViewMutationRecord } from '@tiptap/pm/view'
-import { backspaceHeading, isBlankBody, openLineAt, pm, removeBlockToAbove, titleStyleAttribute } from './helpers'
+import {
+  backspaceHeading,
+  isBlankBody,
+  openLineAt,
+  pm,
+  removeBlockToAbove,
+  replacingSelection,
+  titleStyleAttribute,
+} from './helpers'
 import { nestedList, newFirstItem } from './lists'
 
 /** An accordion: a heading line that owns a box beneath it, which folds away.
@@ -144,9 +152,10 @@ function newLineAfter(tr: Transaction, after: number) {
  *  heading names what comes next, so Enter goes to write it. A folded box is
  *  stepped over instead: its contents are put away, so Enter is a new line
  *  below it, as it would be after any other line — or the next item, in a
- *  list. */
+ *  list. Over selected words, the words go first, since the heading can't
+ *  be split. */
 export function enterAccordionBody(): Command {
-  return (state, dispatch) => {
+  return replacingSelection((state, dispatch) => {
     const { $from, empty } = state.selection
     if (!empty || $from.parent.type.name !== ACCORDION_TITLE) return false
 
@@ -160,7 +169,7 @@ export function enterAccordionBody(): Command {
 
     // Past the heading and into the box.
     return openLineAt(state, dispatch, $from.after() + 1)
-  }
+  })
 }
 
 /** Enter, on an empty last line of the box: out of the accordion, onto a new

@@ -103,6 +103,19 @@ describe('accordion block', () => {
     assert.equal(state.doc.child(1).child(1).childCount, 1)
   })
 
+  it('replaces selected words in the heading on Enter, then goes into the box', () => {
+    const start = page(accordion('Hello world', [paragraph('already here')]))
+    const from = inside(start, 'accordionTitle', 5)
+    const at = start.apply(start.tr.setSelection(TextSelection.create(start.doc, from, from + ' world'.length)))
+    const { state, applied } = run(at, enterAccordionBody())
+    assert.equal(applied, true)
+    state.doc.check()
+    assert.equal(state.doc.child(1).child(0).textContent, 'Hello')
+    assert.equal(state.selection.empty, true)
+    assert.equal(state.selection.$from.node(-1).type.name, 'accordionBody')
+    assert.equal(state.selection.$from.parent.content.size, 0)
+  })
+
   it('leaves the box on Enter from an empty last line, taking the line along', () => {
     const start = page(accordion('Details', [paragraph('text'), paragraph()]))
     const { state, applied } = run(start, leaveAccordion())
@@ -262,6 +275,16 @@ describe('accordion block', () => {
     assert.deepEqual(outline(state), ['title', 'accordion'])
     assert.equal(state.selection.$from.parent.type.name, 'accordionTitle')
     assert.equal(state.selection.$from.parentOffset, 0)
+  })
+
+  it('takes a divider straight above on Backspace in an empty heading, keeping the box', () => {
+    const start = page(paragraph('above'), schema.node('horizontalRule'), accordion(''))
+    const at = caretAt(start, inside(start, 'accordionTitle'))
+    const { state, applied } = run(at, backspaceAccordion())
+    assert.equal(applied, true)
+    assert.deepEqual(outline(state), ['title', 'paragraph', 'accordion'])
+    assert.equal(state.selection instanceof TextSelection, true, 'a caret, not the rule selected')
+    assert.equal(state.selection.$from.parent.type.name, 'accordionTitle')
   })
 
   it('leaves Backspace alone below an open box', () => {

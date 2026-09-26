@@ -1,6 +1,13 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { NodeSelection, Selection, TextSelection, type Command, type Transaction } from '@tiptap/pm/state'
-import { backspaceHeading, pm, removeBlockToAbove, replaceWithEmptyLine, titleStyleAttribute } from './helpers'
+import {
+  backspaceHeading,
+  pm,
+  removeBlockToAbove,
+  replaceWithEmptyLine,
+  replacingSelection,
+  titleStyleAttribute,
+} from './helpers'
 
 /** A list of the page's subpages: the pages one level down, each a link — or,
  *  set to a depth of two, the pages two levels down, grouped under the child
@@ -61,14 +68,14 @@ function caretAfter(tr: Transaction, after: number) {
 
 /** Enter, in the heading: onto the line below the list. The heading is the
  *  block's only line, so there is nothing to split it into, and the list under
- *  it is not written in. */
+ *  it is not written in. Over selected words, the words go first. */
 export function leaveSubpagesTitle(): Command {
-  return (state, dispatch) => {
+  return replacingSelection((state, dispatch) => {
     const { $from, empty } = state.selection
     if (!empty || $from.parent.type.name !== SUBPAGES_TITLE) return false
     if (dispatch) dispatch(caretAfter(state.tr, $from.after(-1)))
     return true
-  }
+  })
 }
 
 /** Backspace, at the very start of the heading: up to the end of the line

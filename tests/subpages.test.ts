@@ -118,6 +118,16 @@ describe('subpage list', () => {
     assert.equal(instance.state.selection.$from.parent.textContent, 'After')
   })
 
+  it('replaces selected words in the heading on Enter, then goes on to the line below', () => {
+    const instance = editor([paragraph('Intro'), subpages('Subpages index'), paragraph('After')], 0)
+    const from = instance.state.doc.child(0).nodeSize + 2 + 'Subpages'.length
+    instance.commands.setTextSelection({ from, to: from + ' index'.length })
+    assert.equal(instance.commands.command(({ state, dispatch }) => leaveSubpagesTitle()(state, dispatch)), true)
+    assert.equal(instance.state.doc.child(1).textContent, 'Subpages')
+    assert.ok(instance.state.selection.empty)
+    assert.equal(instance.state.selection.$from.parent.textContent, 'After')
+  })
+
   it('goes into the first line of a list below on Enter, rather than selecting the list', () => {
     const list = {
       type: 'bulletList',

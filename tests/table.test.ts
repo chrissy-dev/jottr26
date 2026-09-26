@@ -186,6 +186,19 @@ describe('table block', () => {
     assert.equal(state.selection.empty, true)
   })
 
+  it('replaces selected words in a cell on Enter, then adds the row', () => {
+    let state = pageWithTable(3, 3, 1, 2)
+    state = state.apply(state.tr.insertText('abc'))
+    const end = state.selection.from
+    state = state.apply(state.tr.setSelection(TextSelection.create(state.doc, end - 2, end)))
+    const { state: after, applied } = run(state, addRowBelow)
+    assert.equal(applied, true)
+    after.doc.check()
+    assert.deepEqual(dimensions(after), { rows: 4, cols: 3 })
+    assert.equal(after.doc.nodeAt(cellAt(after, 1, 2))?.textContent, 'a')
+    assert.equal(after.selection.$from.pos, cellAt(after, 2, 2) + 2)
+  })
+
   it('adds a body row, not a second header, on Enter in the header', () => {
     const { state } = run(pageWithTable(3, 3, 0, 0), addRowBelow)
     assert.equal((state.doc.lastChild as Node).child(1).firstChild?.type.name, 'tableCell')

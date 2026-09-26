@@ -22,7 +22,7 @@ import type { Mark, Node, ResolvedPos } from '@tiptap/pm/model'
 import { GapCursor } from '@tiptap/pm/gapcursor'
 import { Table } from '@tiptap/extension-table'
 import { ySyncPluginKey } from 'y-prosemirror'
-import { isCellNode, pm, removeBlockToAbove, replaceWithEmptyLine } from './helpers'
+import { isCellNode, pm, removeBlockToAbove, replaceWithEmptyLine, replacingSelection } from './helpers'
 import { columnTrade } from './tableResize'
 
 /** Finance mode: a per-table switch that formats the numbers in a table as
@@ -297,8 +297,9 @@ declare module '@tiptap/core' {
  *  it, in the same column. Shift-Enter is still a new line inside the cell.
  *
  *  Only a line sitting straight in the cell counts. A list or code block
- *  inside one keeps Enter for itself, where it means next item or new line. */
-export const addRowBelow: Command = (state, dispatch) => {
+ *  inside one keeps Enter for itself, where it means next item or new line.
+ *  Over selected words in a cell, the words go first, as typing would take them. */
+export const addRowBelow: Command = replacingSelection((state, dispatch) => {
   const { selection } = state
   if (!(selection instanceof TextSelection) || !isInTable(state)) return false
   const { $from } = selection
@@ -313,7 +314,7 @@ export const addRowBelow: Command = (state, dispatch) => {
     dispatch(tr.scrollIntoView())
   }
   return true
-}
+})
 
 /** Backspace in a row with nothing in any of its cells: the row goes, and the
  *  caret lands at the end of the same column in the row above — or, from the

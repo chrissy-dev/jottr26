@@ -11,6 +11,31 @@ export function pm(editor: Editor, ...commands: Command[]) {
   return () => commands.some((command) => command(editor.state, editor.view.dispatch))
 }
 
+/** `command`, run as though the selected text had already gone: a key that
+ *  replaces a selection when typed replaces it here too, then does what it
+ *  does at a caret. Only a selection inside one line — one that crosses
+ *  blocks is left to `command` as it stands. */
+export function replacingSelection(command: Command): Command {
+  return (state, dispatch, view) => {
+    const { selection } = state
+    if (selection.empty || !(selection instanceof TextSelection) || !selection.$from.sameParent(selection.$to)) {
+      return command(state, dispatch, view)
+    }
+    const tr = state.tr.deleteSelection()
+    return command(
+      state.apply(tr),
+      dispatch &&
+        ((next) => {
+          for (const step of next.steps) tr.step(step)
+          tr.setSelection(Selection.fromJSON(tr.doc, next.selection.toJSON()))
+          if (next.scrolledIntoView) tr.scrollIntoView()
+          dispatch(tr)
+        }),
+      view,
+    )
+  }
+}
+
 export function isEmptyParagraph(node: Node | null | undefined): boolean {
   return node?.type.name === 'paragraph' && node.content.size === 0
 }
@@ -63,6 +88,9 @@ export function caretToLineAbove(state: EditorState, dispatch: ((tr: Transaction
  *  the caret goes up to the end of the line above — as Backspace would from
  *  any line there is nothing to join into.
  *
+ *  A divider straight above goes instead, and the block stays, as it does
+ *  under any line.
+ *
  *  False where it can't: there is no line above, or the page or list item
  *  can't be left without a line here. The caller decides what happens then. */
 export function removeBlockToAbove(
@@ -72,6 +100,7 @@ export function removeBlockToAbove(
   end: number,
   replacement: Node[] = [],
 ) {
+  if (deleteDividerBefore(state, dispatch, pos)) return true
   const $pos = state.doc.resolve(pos)
   const above = Selection.findFrom($pos, -1)
   const index = $pos.index()
