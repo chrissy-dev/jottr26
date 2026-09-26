@@ -18,10 +18,10 @@ interface WorkspaceValue {
   /** True once we know whether there is a session and, if so, the local
    *  database is open. Everything downstream can assume storage is ready. */
   ready: boolean
-  /** Syncs now, or retries at once if the last attempt failed. Resolves once
-   *  that sync has finished, with how it went — or null when there is no
-   *  engine to ask. */
-  forceSync: () => Promise<SyncStatus | null>
+  /** Retries a failed sync at once, skipping the backoff. Resolves once that
+   *  sync has finished, with how it went — or null when there is no engine to
+   *  ask. */
+  retrySync: () => Promise<SyncStatus | null>
   /** Abandons the sync in progress, for a network that never answers. */
   cancelSync: () => void
   signOut: () => Promise<void>
@@ -150,18 +150,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userId])
 
-  // Read when a sync is forced, to choose between syncing and retrying,
-  // without the actions having to change with every status.
-  const statusRef = useRef(status)
-  useEffect(() => {
-    statusRef.current = status
-  }, [status])
-
-  const forceSync = useCallback(async () => {
-    const engine = engineRef.current
-    if (!engine) return null
-    return statusRef.current.phase === 'error' ? engine.retryNow() : engine.syncNow()
-  }, [])
+  const retrySync = useCallback(async () => engineRef.current?.retryNow() ?? null, [])
   const cancelSync = useCallback(() => engineRef.current?.cancelSync(), [])
 
   const value = useMemo<WorkspaceValue>(
@@ -169,11 +158,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       session,
       userId,
       ready: ready && (!userId || openFor === userId),
-      forceSync,
+      retrySync,
       cancelSync,
       signOut,
     }),
-    [session, userId, ready, openFor, forceSync, cancelSync, signOut],
+    [session, userId, ready, openFor, retrySync, cancelSync, signOut],
   )
 
   return (

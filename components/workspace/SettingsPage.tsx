@@ -1,7 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
-import { SyncStatusRow, useForceSync } from './SyncControls'
+import { SyncStatusRow, useRetrySync } from './SyncControls'
 import { useSyncStatus, useWorkspace } from './WorkspaceProvider'
 import { setTheme, useTheme, type Theme } from '@/lib/util/theme'
 
@@ -24,7 +24,7 @@ const built = new Intl.DateTimeFormat(undefined, {
 export function SettingsPage() {
   const { session, signOut } = useWorkspace()
   const status = useSyncStatus()
-  const forceSync = useForceSync()
+  const retrySync = useRetrySync()
 
   return (
     <>
@@ -40,8 +40,8 @@ export function SettingsPage() {
       <ThemeRow />
 
       <SectionLabel>Sync</SectionLabel>
-      <SyncStatusRow onForceSync={() => void forceSync.startSync()} />
-      {forceSync.overlay}
+      <SyncStatusRow onRetry={() => void retrySync.startSync()} />
+      {retrySync.overlay}
 
       <button
         type="button"

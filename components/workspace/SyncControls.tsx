@@ -21,10 +21,10 @@ const OVERLAY_MIN_MS = 600;
 
 type Overlay = { failure: string | null } | null;
 
-/** Runs a sync with its progress overlay, which is returned for the caller to
- *  render. */
-export function useForceSync() {
-  const { forceSync, cancelSync } = useWorkspace();
+/** Retries a failed sync with its progress overlay, which is returned for the
+ *  caller to render. */
+export function useRetrySync() {
+  const { retrySync, cancelSync } = useWorkspace();
   const [overlay, setOverlay] = useState<Overlay>(null);
   // Bumped on every start, cancel and close, so a sync that settles after its
   // overlay was dismissed cannot reopen it.
@@ -34,7 +34,7 @@ export function useForceSync() {
     const id = ++attempt.current;
     setOverlay({ failure: null });
     const [result] = await Promise.all([
-      forceSync(),
+      retrySync(),
       new Promise((resolve) => setTimeout(resolve, OVERLAY_MIN_MS)),
     ]);
     if (attempt.current !== id) return;
@@ -68,7 +68,7 @@ export function useForceSync() {
   return { startSync, overlay: element };
 }
 
-export function SyncStatusRow({ onForceSync }: { onForceSync: () => void }) {
+export function SyncStatusRow({ onRetry }: { onRetry: () => void }) {
   const status = useSyncStatus();
   const visual = look[status.phase];
 
@@ -77,14 +77,18 @@ export function SyncStatusRow({ onForceSync }: { onForceSync: () => void }) {
       {/* Centred under the account row's icon. */}
       <span aria-hidden="true" className={`mx-[3.5px] size-2 shrink-0 rounded-full ${visual.dot}`} />
       <span className="flex-1 text-ink">{visual.label}</span>
-      <button
-        type="button"
-        onClick={onForceSync}
-        className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
-      >
-        <Icon name="refresh" size={14} />
-        Force sync
-      </button>
+      {/* Syncing runs on its own; this is only for skipping the wait after a
+          failure. Offline or signed out, a retry has nothing to reach. */}
+      {status.phase === "error" && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
+        >
+          <Icon name="refresh" size={14} />
+          Retry now
+        </button>
+      )}
     </div>
   );
 }

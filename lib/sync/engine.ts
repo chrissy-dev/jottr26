@@ -318,7 +318,7 @@ export class SyncEngine {
   /** Ask for a sync now. Safe to call as often as you like. After a failure
    *  it waits out the backoff: an edit, a realtime event or the tab coming
    *  back would otherwise each start a sync bound to fail, every second or so
-   *  while typing through an outage. The sync button goes straight through. */
+   *  while typing through an outage. Retry now goes straight through. */
   request() {
     if (this.inBackoff()) return
     void this.run()
@@ -335,7 +335,7 @@ export class SyncEngine {
     await this.run()
   }
 
-  /** The status menu's sync button. Unlike request(), this resolves only once
+  /** Behind the settings page's Retry now. Unlike request(), this resolves only once
    *  a sync that started after the click has finished, and with how it went —
    *  one already in flight may have begun before the edit that prompted it. */
   async syncNow(): Promise<SyncStatus> {
@@ -377,7 +377,7 @@ export class SyncEngine {
     else this.statusChannel?.postMessage({ type: 'nudge' } satisfies StatusMessage)
   }
 
-  /** Used by the retry affordance in the status menu. */
+  /** The settings page's Retry now, shown once a sync has failed. */
   retryNow() {
     this.failures = 0
     if (this.retryTimer) clearTimeout(this.retryTimer)
