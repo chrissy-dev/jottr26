@@ -78,7 +78,7 @@ function ThemeRow() {
   return (
     <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)]">
       <span className="flex-1 text-ink">Theme</span>
-      <div className="-mr-0.5 flex rounded-lg bg-[var(--hover)] p-0.5">
+      <div className="-mr-0.5 flex rounded-lg border border-line p-0.5">
         {THEMES.map(({ value, label }) => (
           <button
             key={value}
@@ -86,7 +86,7 @@ function ThemeRow() {
             aria-pressed={theme === value}
             onClick={() => setTheme(value)}
             className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition-colors pointer-coarse:py-1.5 pointer-coarse:text-[14px] ${
-              theme === value ? 'bg-raised text-ink shadow-[var(--shadow-soft)]' : 'text-muted hover:text-ink'
+              theme === value ? 'bg-[var(--selected)] text-ink' : 'text-muted hover:bg-[var(--hover)] hover:text-ink'
             }`}
           >
             {label}
