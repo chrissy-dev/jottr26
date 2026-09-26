@@ -2,33 +2,29 @@
 
 import { memo, useMemo } from 'react'
 import { Icon, type IconName } from '@/components/ui/Icon'
-import { MenuItem, MenuSeparator, Popover } from '@/components/ui/Popover'
 import { PageMenu } from './PageMenu'
 import { PageRowButton, RowActions } from './PageRow'
 import { PageTree } from './PageTree'
-import { SyncStatusRow, useForceSync } from './SyncControls'
-import { useSyncStatus, useWorkspace } from './WorkspaceProvider'
 import { buildTree, useDrawnRows, type TreeNode } from '@/lib/db/hooks'
 import { createPage } from '@/lib/db/pages'
 import { toggleExpanded, useExpanded } from '@/lib/util/expanded'
 import { raiseKeyboard } from '@/lib/util/keyboard'
+import type { View } from '@/lib/util/route'
 import type { PageRow } from '@/lib/db/schema'
 
 export function Sidebar({
   pages,
   openId,
   onOpen,
-  trashOpen,
-  onOpenTrash,
+  view,
+  onOpenView,
 }: {
   pages: PageRow[]
   openId: string | null
   onOpen: (id: string | null) => void
-  trashOpen: boolean
-  onOpenTrash: () => void
+  view: View | null
+  onOpenView: (view: View) => void
 }) {
-  const { session } = useWorkspace()
-  const forceSync = useForceSync()
   const expanded = useExpanded()
 
   // Typing changes only rows' search text and edit time, which the sidebar
@@ -39,56 +35,22 @@ export function Sidebar({
 
   return (
     <div className="sidebar-tones flex h-full flex-col bg-sidebar">
-      <header className="flex items-center gap-1 px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <span className="mr-auto min-w-0 truncate px-2 py-1.5 text-[17px] font-semibold tracking-[-0.01em] text-ink pointer-coarse:text-[19px]">
+      {/* The line is the height the settings button used to give it, which the
+          page's floating buttons still line up with. */}
+      <header className="px-3 pb-1 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <span className="block truncate px-2 text-[17px] font-semibold leading-8 tracking-[-0.01em] text-ink pointer-coarse:text-[19px] pointer-coarse:leading-9">
           Jottr
         </span>
-        <Popover
-          width="auto"
-          align="end"
-          className="min-w-[244px]"
-          trigger={({ ref, toggle }) => (
-            <button
-              type="button"
-              ref={ref}
-              onClick={toggle}
-              aria-label="Settings"
-              className="grid size-8 place-items-center rounded-md text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:size-9"
-            >
-              <Icon name="settings" size={18} className="pointer-coarse:size-5" strokeWidth={1.8} />
-            </button>
-          )}
-        >
-          {(close) => (
-            <>
-              <p className="flex items-center gap-1.5 px-2.5 py-1.5 text-ink pointer-coarse:py-2.5">
-                <Icon name="user" size={14} className="shrink-0 text-muted" />
-                <span className="min-w-0 [overflow-wrap:anywhere]">{session?.user.email}</span>
-              </p>
-              <MenuSeparator />
-              <SyncStatusRow
-                onForceSync={() => {
-                  close()
-                  void forceSync.startSync()
-                }}
-              />
-              <MenuSeparator />
-              <SignOutItem close={close} />
-            </>
-          )}
-        </Popover>
       </header>
 
-      {forceSync.overlay}
-
-      {/* Clicking the empty space under the list closes the open page, or the
-          trash. Rows, and the menus they portal out of this element, bubble
-          through here too, so only a click that landed on the space itself
-          counts — and not one on the scrollbar, which Firefox reports as a
-          click on the element it scrolls. */}
+      {/* Clicking the empty space under the list closes the open page, the
+          trash or the settings. Rows, and the menus they portal out of this
+          element, bubble through here too, so only a click that landed on the
+          space itself counts — and not one on the scrollbar, which Firefox
+          reports as a click on the element it scrolls. */}
       <nav
         onClick={(event) => {
-          if ((!openId && !trashOpen) || event.target !== event.currentTarget) return
+          if ((!openId && !view) || event.target !== event.currentTarget) return
           const bounds = event.currentTarget.getBoundingClientRect()
           if (event.clientX - bounds.left >= event.currentTarget.clientWidth) return
           onOpen(null)
@@ -129,38 +91,20 @@ export function Sidebar({
       </nav>
 
       <footer className="border-t border-line px-3 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
-        <SidebarAction icon="trash" label="Trash" current={trashOpen} onClick={onOpenTrash} />
+        <SidebarAction
+          icon="settings"
+          label="Settings"
+          current={view === 'settings'}
+          onClick={() => onOpenView('settings')}
+        />
+        <SidebarAction
+          icon="trash"
+          label="Trash"
+          current={view === 'trash'}
+          onClick={() => onOpenView('trash')}
+        />
       </footer>
     </div>
-  )
-}
-
-/** Its own component so that only an open settings menu follows the pending
- *  count, rather than the whole sidebar. */
-function SignOutItem({ close }: { close: () => void }) {
-  const { signOut } = useWorkspace()
-  const status = useSyncStatus()
-  return (
-    <MenuItem
-      icon={<Icon name="logout" size={14} />}
-      tone="danger"
-      onClick={() => {
-        // Signing out erases the local copy, so unsynced work has to
-        // be called out rather than quietly discarded.
-        if (
-          status.pending > 0 &&
-          !window.confirm(
-            `${status.pending} ${status.pending === 1 ? 'page has' : 'pages have'} changes that haven't reached your account yet. Signing out now will discard them. Continue?`,
-          )
-        ) {
-          return
-        }
-        close()
-        void signOut()
-      }}
-    >
-      Sign out
-    </MenuItem>
   )
 }
 

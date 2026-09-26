@@ -35,24 +35,29 @@ export function useOpenPageId(): [string | null, (id: string | null, options?: {
     if (id) next.set('p', id)
     else next.delete('p')
     next.delete('new')
-    next.delete('trash')
+    for (const view of VIEWS) next.delete(view)
     navigate(next, options?.replace)
   }, [])
   return [params.get('p'), open]
 }
 
-/** The trash is a view of its own, in place of a page, so it lives in the
- *  query string the same way and the back button leaves it like any page. */
-export function useTrashOpen(): [boolean, () => void] {
+/** The trash and the settings are views of their own, in place of a page, so
+ *  they live in the query string the same way and the back button leaves them
+ *  like any page. */
+const VIEWS = ['trash', 'settings'] as const
+export type View = (typeof VIEWS)[number]
+
+export function useView(): [View | null, (view: View) => void] {
   const params = useQuery()
-  const openTrash = useCallback(() => {
+  const openView = useCallback((view: View) => {
     const next = new URLSearchParams(window.location.search)
     next.delete('p')
     next.delete('new')
-    next.set('trash', '')
+    for (const other of VIEWS) next.delete(other)
+    next.set(view, '')
     navigate(next)
   }, [])
-  return [params.has('trash'), openTrash]
+  return [VIEWS.find((view) => params.has(view)) ?? null, openView]
 }
 
 function navigate(next: URLSearchParams, replace?: boolean) {

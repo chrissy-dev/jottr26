@@ -10,6 +10,7 @@ import { EmptyState } from './EmptyState'
 import { EnsureFirstPage } from './EnsureFirstPage'
 import { LastUpdated } from './LastUpdated'
 import { PagesContext } from './PagesContext'
+import { SettingsPage } from './SettingsPage'
 import { Sidebar } from './Sidebar'
 import { StarButton } from './StarButton'
 import { TrashPage } from './TrashPage'
@@ -18,7 +19,7 @@ import { usePageTrail, useEntryFromAbove } from './pageTrail'
 import { useSidebarDrawer } from './useSidebarDrawer'
 import { useSidebarResize } from './useSidebarResize'
 import { useAllPages } from '@/lib/db/hooks'
-import { useOpenPageId, useTrashOpen } from '@/lib/util/route'
+import { useOpenPageId, useView, type View } from '@/lib/util/route'
 
 // The editor is the heaviest thing in the app and nobody needs it until a page
 // is open, so it loads as its own chunk and never during hydration.
@@ -31,7 +32,7 @@ export function Workspace() {
   const { userId } = useWorkspace()
   const pages = useAllPages(userId)
   const [openId, open] = useOpenPageId()
-  const [trashOpen, openTrash] = useTrashOpen()
+  const [view, openView] = useView()
   const { wide, sidebarOpen, setSidebarOpen, afterDrawerShuts } = useSidebarDrawer()
   const { width, dragging, startResize, endResize } = useSidebarResize()
 
@@ -61,7 +62,10 @@ export function Workspace() {
     [open, afterDrawerShuts],
   )
 
-  const showTrash = useCallback(() => afterDrawerShuts(openTrash), [openTrash, afterDrawerShuts])
+  const showView = useCallback(
+    (next: View) => afterDrawerShuts(() => openView(next)),
+    [openView, afterDrawerShuts],
+  )
 
   if (!pages) return <LoadingScreen label="Opening your notes…" />
 
@@ -108,8 +112,8 @@ export function Workspace() {
               pages={pages}
               openId={openId}
               onOpen={openPage}
-              trashOpen={trashOpen}
-              onOpenTrash={showTrash}
+              view={view}
+              onOpenView={showView}
             />
           </div>
         </aside>
@@ -160,8 +164,8 @@ export function Workspace() {
           </div>
 
           {/* The top-right counterpart of the sidebar button, with the same
-              backdrop for the same reason, on the same line as the settings
-              button in the sidebar's header. */}
+              backdrop for the same reason, on the same line as the sidebar's
+              header. */}
           {wide && page && (
             <StarButton
               page={page}
@@ -171,7 +175,7 @@ export function Workspace() {
 
           {page && <LastUpdated at={Math.max(page.updatedAt, page.editedAt ?? 0)} />}
 
-          {page || trashOpen ? (
+          {page || view ? (
             <div className="scroll-thin relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
               {/* On a narrow screen the trail and the star are part of the page:
                   they start level with the sidebar button, the trail just past
@@ -193,9 +197,10 @@ export function Workspace() {
                   drawer opened and closed. */}
               {/* Keyed on the page so the slide replays on every navigation. The
                   editor underneath already remounts per page, so this costs
-                  nothing more than it did. The trash takes the same column. */}
+                  nothing more than it did. The trash and the settings take the same
+                  column. */}
               <div
-                key={page?.id ?? 'trash'}
+                key={page?.id ?? view}
                 className={`page-enter mx-auto w-full max-w-[780px] px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
                   wide
                     ? 'pt-28'
@@ -206,6 +211,8 @@ export function Workspace() {
                   <EditorError>
                     <Editor pageId={page.id} />
                   </EditorError>
+                ) : view === 'settings' ? (
+                  <SettingsPage />
                 ) : (
                   <TrashPage />
                 )}

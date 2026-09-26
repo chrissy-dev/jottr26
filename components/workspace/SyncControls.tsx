@@ -21,10 +21,8 @@ const OVERLAY_MIN_MS = 600;
 
 type Overlay = { failure: string | null } | null;
 
-/**
- * Runs a sync with its progress overlay. The overlay is returned for the
- * caller to render outside the menu that started it, which closes on click.
- */
+/** Runs a sync with its progress overlay, which is returned for the caller to
+ *  render. */
 export function useForceSync() {
   const { forceSync, cancelSync } = useWorkspace();
   const [overlay, setOverlay] = useState<Overlay>(null);
@@ -75,13 +73,14 @@ export function SyncStatusRow({ onForceSync }: { onForceSync: () => void }) {
   const visual = look[status.phase];
 
   return (
-    <div className="flex items-center gap-2 py-0.5 pl-2.5 pr-1">
-      <span aria-hidden="true" className={`size-1.5 shrink-0 rounded-full ${visual.dot}`} />
+    <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)]">
+      {/* Centred under the account row's icon. */}
+      <span aria-hidden="true" className={`mx-[3.5px] size-2 shrink-0 rounded-full ${visual.dot}`} />
       <span className="flex-1 text-ink">{visual.label}</span>
       <button
         type="button"
         onClick={onForceSync}
-        className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
+        className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
       >
         <Icon name="refresh" size={14} />
         Force sync
