@@ -8,7 +8,10 @@ export const WIDE_QUERY = '(min-width: 880px)'
 /** Whether the screen is wide, and whether the sidebar is showing: always
  *  beside the page on a wide screen, and a drawer over it on a narrow one. */
 export function useSidebarDrawer() {
-  const [wide, setWide] = useState(true)
+  // Read at once rather than in the effect below, or a phone would draw its
+  // first frame with the sidebar beside the page. The workspace only renders
+  // in the browser, so there is always a window to ask.
+  const [wide, setWide] = useState(() => window.matchMedia(WIDE_QUERY).matches)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {

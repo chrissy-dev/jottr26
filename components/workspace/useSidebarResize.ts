@@ -15,10 +15,27 @@ function clampWidth(value: number) {
   return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(value)))
 }
 
+/** The width kept from last time, if there is a usable one. Clamped on the
+ *  way in as well as out: a value left behind by an older build, or by hand,
+ *  should not be able to produce an unusable sidebar. */
+function storedWidth(): number | null {
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(WIDTH_KEY)
+  } catch {
+    /* Ignore. */
+  }
+  const parsed = Number(stored)
+  return Number.isFinite(parsed) && parsed > 0 ? clampWidth(parsed) : null
+}
+
 /** The wide sidebar's width, which its edge can be dragged to change, and
  *  which is kept for next time. */
 export function useSidebarResize() {
-  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  // Read at once, not in an effect: starting from the default, the sidebar
+  // would slide out to its kept width on every launch. The workspace only
+  // renders in the browser, so storage is always there to ask.
+  const [width, setWidth] = useState(() => storedWidth() ?? DEFAULT_WIDTH)
   const [dragging, setDragging] = useState(false)
   const drag = useRef<{
     x: number
@@ -33,18 +50,9 @@ export function useSidebarResize() {
   useEffect(() => {
     const media = window.matchMedia(WIDE_QUERY)
     const read = () => {
-      let storedWidth: string | null = null
-      try {
-        storedWidth = localStorage.getItem(WIDTH_KEY)
-      } catch {
-        /* Ignore. */
-      }
-      // Clamped on the way in as well as out: a value left behind by an older
-      // build, or by hand, should not be able to produce an unusable sidebar.
-      const parsedWidth = Number(storedWidth)
-      if (Number.isFinite(parsedWidth) && parsedWidth > 0) setWidth(clampWidth(parsedWidth))
+      const kept = storedWidth()
+      if (kept !== null) setWidth(kept)
     }
-    read()
     media.addEventListener('change', read)
     return () => media.removeEventListener('change', read)
   }, [])
