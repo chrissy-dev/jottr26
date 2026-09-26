@@ -49,7 +49,7 @@ export function SettingsPage() {
             }
             void signOut()
           }}
-          className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-danger transition-colors hover:bg-[var(--hover)] pointer-coarse:py-2 pointer-coarse:text-[14px]"
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-danger transition-colors hover:bg-[var(--hover)] pointer-coarse:py-2 pointer-coarse:text-[14px]"
         >
           <Icon name="logout" size={14} />
           Sign out

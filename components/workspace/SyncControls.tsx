@@ -83,7 +83,7 @@ export function SyncStatusRow({ onRetry }: { onRetry: () => void }) {
         <button
           type="button"
           onClick={onRetry}
-          className="-mr-2 flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
         >
           <Icon name="refresh" size={14} />
           Retry now
