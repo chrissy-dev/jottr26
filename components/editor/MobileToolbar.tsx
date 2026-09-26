@@ -150,11 +150,6 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
     }
   }, [visible, editor])
 
-  const closeLink = () => {
-    link.close()
-    editor.commands.focus()
-  }
-
   // A phone keyboard keeps '/' a layer or two down, so the bar types it for
   // you. The slash menu only opens after a space or at the start of a line,
   // so a caret straight after a word gets a space first. Typing it over a
@@ -206,9 +201,9 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
             initialHref={link.value}
             onApply={link.apply}
             onUnset={link.clear}
-            onClose={closeLink}
+            onClose={link.dismiss}
           />
-          <ToolButton icon="x" label="Close" onClick={closeLink} />
+          <ToolButton icon="x" label="Close" onClick={link.dismiss} />
         </div>
       ) : (
         <>

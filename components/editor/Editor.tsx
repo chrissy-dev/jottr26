@@ -12,7 +12,7 @@ import { createSlashExtension } from './extensions/slash'
 import { slashHandlers } from './slashBridge'
 import { SlashMenu } from './SlashMenu'
 import { useSlashMenu } from './useSlashMenu'
-import { SubpageList } from './SubpageList'
+import { isListControl, SubpageList } from './SubpageList'
 import { FormatMenu } from './FormatMenu'
 import { MobileToolbar } from './MobileToolbar'
 import { TableMenu } from './TableMenu'
@@ -74,9 +74,7 @@ function Loader({ pageId }: { pageId: string }) {
     )
   }
 
-  // Keyed by page: each page is a separate Y.Doc, so it gets its own editor
-  // instance rather than having its content swapped underneath it.
-  return <Surface key={pageId} pageId={pageId} doc={handle.doc} />
+  return <Surface pageId={pageId} doc={handle.doc} />
 }
 
 /** Everything the editor is built from, for one page's document. */
@@ -93,10 +91,7 @@ function editorExtensions(doc: Y.Doc, pageId: string): Extensions {
             // ProseMirror would read any of them as an edit to the
             // document. The block's own heading is written in like any other
             // line.
-            stopEvent: ({ event }) =>
-              event.target instanceof Element &&
-              !event.target.closest('.subpages-title') &&
-              !!event.target.closest('li, .subpages-group-head, button, a'),
+            stopEvent: ({ event }) => event.target instanceof Element && isListControl(event.target),
           }),
       }).configure({ pageId }),
     }),

@@ -56,10 +56,7 @@ export function useSlashMenu() {
           slashRef.current.command(item)
           return true
         }
-        if (event.key === 'Escape') {
-          setSlash(null)
-          return true
-        }
+        // Escape is the suggestion's own: it closes the menu, through onExit.
         return false
       },
       onExit: () => setSlash(null),

@@ -6,11 +6,7 @@ import { NodeSelection } from '@tiptap/pm/state'
 import { CellSelection } from '@tiptap/pm/tables'
 import { useEditorState } from '@tiptap/react'
 import { LinkPicker } from './LinkPicker'
-import { FormatButtons, formatFlags, useLinkEditing } from './formatActions'
-
-/** Held once, not made per render: the bubble dispatches a transaction to
- *  pass on its options whenever one of these props is a new object. */
-const OPTIONS = { placement: 'top', offset: 8 } as const
+import { BUBBLE_OPTIONS, FormatButtons, formatFlags, useLinkEditing } from './formatActions'
 
 const shouldShow: BubbleMenuProps['shouldShow'] = ({ editor: instance, from, to }) => {
   if (from === to) return false
@@ -35,7 +31,7 @@ export function FormatMenu({ editor, pageId }: { editor: Editor; pageId: string 
   return (
     <BubbleMenu
       editor={editor}
-      options={OPTIONS}
+      options={BUBBLE_OPTIONS}
       shouldShow={shouldShow}
       className="flex items-center gap-1 rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] pop-in"
     >
@@ -44,10 +40,7 @@ export function FormatMenu({ editor, pageId }: { editor: Editor; pageId: string 
           initialHref={link.value}
           onApply={link.apply}
           onUnset={link.clear}
-          onClose={() => {
-            link.close()
-            editor.commands.focus()
-          }}
+          onClose={link.dismiss}
         />
       ) : (
         <FormatButtons

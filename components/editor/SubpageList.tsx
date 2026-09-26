@@ -47,6 +47,12 @@ type Drop = { id: string; zone: 'before' | 'after' | 'inside' }
 
 const DEPTHS = [1, 2] as const
 
+/** One of the list's own controls — an entry, a group's heading, a button or a
+ *  link — rather than the heading above it, which is written in. */
+export function isListControl(target: Element) {
+  return !target.closest('.subpages-title') && !!target.closest('li, .subpages-group-head, button, a')
+}
+
 export function SubpageList({ editor, extension, node, getPos, updateAttributes }: ReactNodeViewProps) {
   const { pageId } = extension.options as SubpagesOptions
   const depth = node.attrs.depth === 2 ? 2 : 1
@@ -83,7 +89,7 @@ export function SubpageList({ editor, extension, node, getPos, updateAttributes 
     // The heading is written in, and the menus' presses, bubbled up here by
     // React from the portals they're drawn in, are the menus' own.
     if (!(target instanceof Element) || !event.currentTarget.contains(target) || target.closest('.subpages-title')) return
-    if (!target.closest('li, .subpages-group-head, button, a')) {
+    if (!isListControl(target)) {
       event.preventDefault()
       const pos = getPos()
       if (typeof pos === 'number') editor.chain().focus().setNodeSelection(pos).run()

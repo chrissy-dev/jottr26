@@ -11,33 +11,25 @@ import {
 import { createPortal } from 'react-dom'
 
 type Align = 'start' | 'end' | 'center'
-type Side = 'bottom' | 'top' | 'right'
 
 /** A small anchored panel: menus, pickers, the account card.
  *
  *  Rendered into a portal at fixed coordinates so it is never clipped by the
  *  sidebar's own scroll container, and flipped above the trigger when there is
- *  no room below. A panel to the right sits level with the trigger and flips to
- *  its left when the window runs out. */
+ *  no room below. */
 export function Popover({
   trigger,
   children,
   align = 'start',
-  side = 'bottom',
   width = 220,
   className = '',
-  role = 'menu',
-  shadow = 'pop',
 }: {
   trigger: (props: { open: boolean; toggle: () => void; ref: (node: HTMLElement | null) => void }) => ReactElement
   children: (close: () => void) => React.ReactNode
   align?: Align
-  side?: Side
   /** Pixels, or 'auto' to fit the content up to the window's width. */
   width?: number | 'auto'
   className?: string
-  role?: 'menu' | 'dialog'
-  shadow?: 'pop' | 'soft'
 }) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
@@ -64,14 +56,7 @@ export function Popover({
       const panelWidth = width === 'auto' ? (panelRef.current?.offsetWidth ?? 220) : width
       const margin = 8
 
-      if (side === 'right') {
-        let left = rect.right + 6
-        if (left + panelWidth > window.innerWidth - margin) left = rect.left - panelWidth - 6
-        moveTo(rect.top + rect.height / 2 - height / 2, Math.max(margin, left))
-        return
-      }
-
-      let top = side === 'bottom' ? rect.bottom + 6 : rect.top - height - 6
+      let top = rect.bottom + 6
       if (top + height > window.innerHeight - margin) top = rect.top - height - 6
       if (top < margin) top = Math.min(rect.bottom + 6, window.innerHeight - height - margin)
 
@@ -93,7 +78,7 @@ export function Popover({
       window.removeEventListener('resize', place)
       window.removeEventListener('scroll', place, true)
     }
-  }, [open, anchor, align, side, width])
+  }, [open, anchor, align, width])
 
   useEffect(() => {
     if (!open) return
@@ -121,7 +106,7 @@ export function Popover({
         createPortal(
           <div
             ref={panelRef}
-            role={role}
+            role="menu"
             style={{
               top: position?.top ?? -9999,
               left: position?.left ?? -9999,
@@ -129,9 +114,7 @@ export function Popover({
               maxWidth: 'calc(100vw - 16px)',
               visibility: position ? 'visible' : 'hidden',
             }}
-            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 ${
-              shadow === 'soft' ? 'shadow-[var(--shadow-soft)]' : 'shadow-[var(--shadow-pop)]'
-            } ${className}`}
+            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] ${className}`}
           >
             {children(close)}
           </div>,

@@ -29,6 +29,10 @@ export function formatFlags(editor: Editor) {
 export type FormatFlags = ReturnType<typeof formatFlags>
 
 /** The link field that takes the toolbar's place while a link is written. */
+/** Held once, not made per render: a bubble menu dispatches a transaction to
+ *  pass on its options whenever this prop is a new object. */
+export const BUBBLE_OPTIONS = { placement: 'top', offset: 8 } as const
+
 export function useLinkEditing(editor: Editor) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
@@ -56,6 +60,11 @@ export function useLinkEditing(editor: Editor) {
       setOpen(true)
     },
     close,
+    /** Closed from the field itself: back to writing where the caret was. */
+    dismiss: () => {
+      close()
+      editor.commands.focus()
+    },
     apply: (href: string) => {
       close()
       editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
