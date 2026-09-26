@@ -40,13 +40,16 @@ create table if not exists public.page_docs (
 );
 
 create index if not exists pages_user_updated_idx on public.pages (user_id, updated_at);
-create index if not exists pages_user_parent_idx on public.pages (user_id, parent_id);
+-- The live-page scan that reconciles deletions: your unpurged rows, by id.
+-- Nothing reads pages by parent on the server; the tree is built on the device.
+drop index if exists public.pages_user_parent_idx;
+create index if not exists pages_user_live_idx on public.pages (user_id, id) where purged_at is null;
 create index if not exists page_docs_user_updated_idx on public.page_docs (user_id, updated_at);
 
 -- updated_at is stamped by the server so clients never have to trust their own
 -- clock when deciding what they have already pulled.
 create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = '' as $$
 begin
   new.updated_at := now();
   return new;
@@ -63,7 +66,7 @@ create trigger pages_touch_updated_at
 -- and never errors, so that device's sync carries on and pulls the tombstone.
 -- Named to sort before pages_touch_updated_at, so the skip wins.
 create or replace function public.keep_purged()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = '' as $$
 begin
   if old.purged_at is not null then
     return null;
@@ -88,7 +91,8 @@ create trigger page_docs_touch_updated_at
 -- belong to a page of yours, when written and when rewritten: the foreign key
 -- alone does not check that, since foreign key checks bypass RLS, and a
 -- document someone else inserted for your page, or moved onto it by changing
--- its page_id, would leave you unable to save it.
+-- its page_id, would leave you unable to save it. auth.uid() is wrapped in a
+-- select so Postgres works it out once per query, not again for every row.
 -- ---------------------------------------------------------------------------
 alter table public.pages enable row level security;
 alter table public.page_docs enable row level security;
@@ -97,31 +101,31 @@ drop policy if exists pages_select on public.pages;
 drop policy if exists pages_insert on public.pages;
 drop policy if exists pages_update on public.pages;
 drop policy if exists pages_delete on public.pages;
-create policy pages_select on public.pages for select using (auth.uid() = user_id);
-create policy pages_insert on public.pages for insert with check (auth.uid() = user_id);
-create policy pages_update on public.pages for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy pages_delete on public.pages for delete using (auth.uid() = user_id);
+create policy pages_select on public.pages for select using ((select auth.uid()) = user_id);
+create policy pages_insert on public.pages for insert with check ((select auth.uid()) = user_id);
+create policy pages_update on public.pages for update using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create policy pages_delete on public.pages for delete using ((select auth.uid()) = user_id);
 
 drop policy if exists page_docs_select on public.page_docs;
 drop policy if exists page_docs_insert on public.page_docs;
 drop policy if exists page_docs_update on public.page_docs;
 drop policy if exists page_docs_delete on public.page_docs;
-create policy page_docs_select on public.page_docs for select using (auth.uid() = user_id);
+create policy page_docs_select on public.page_docs for select using ((select auth.uid()) = user_id);
 create policy page_docs_insert on public.page_docs for insert with check (
-  auth.uid() = user_id
+  (select auth.uid()) = user_id
   and exists (
     select 1 from public.pages as p
-     where p.id = page_docs.page_id and p.user_id = auth.uid()
+     where p.id = page_docs.page_id and p.user_id = (select auth.uid())
   )
 );
-create policy page_docs_update on public.page_docs for update using (auth.uid() = user_id) with check (
-  auth.uid() = user_id
+create policy page_docs_update on public.page_docs for update using ((select auth.uid()) = user_id) with check (
+  (select auth.uid()) = user_id
   and exists (
     select 1 from public.pages as p
-     where p.id = page_docs.page_id and p.user_id = auth.uid()
+     where p.id = page_docs.page_id and p.user_id = (select auth.uid())
   )
 );
-create policy page_docs_delete on public.page_docs for delete using (auth.uid() = user_id);
+create policy page_docs_delete on public.page_docs for delete using ((select auth.uid()) = user_id);
 
 -- A saved document stamps its page row. Realtime carries only pages (see the
 -- end of this file), so this small row is how other devices hear that the
@@ -130,6 +134,7 @@ create or replace function public.page_doc_saved(p_page_id uuid)
 returns void
 language sql
 security invoker
+set search_path = ''
 as $$
   update public.pages set updated_at = now() where id = p_page_id;
 $$;
@@ -166,6 +171,7 @@ create function public.push_page_doc(
 returns table (ydoc text, version bigint, applied boolean, saved_at timestamptz)
 language plpgsql
 security invoker
+set search_path = ''
 as $$
 declare
   v_ydoc    text;
@@ -236,6 +242,7 @@ create or replace function public.purge_pages(p_ids uuid[])
 returns void
 language plpgsql
 security invoker
+set search_path = ''
 as $$
 begin
   delete from public.page_docs where page_id = any (p_ids);
