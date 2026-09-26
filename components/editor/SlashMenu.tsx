@@ -30,16 +30,19 @@ export function SlashMenu(props: SlashListProps) {
 
   // The menu is fixed to the viewport, so a scroll or a resize would leave it
   // behind the caret. Either one redraws it against where the caret now is.
+  // Keyed on the menu being up, not on `measure` itself, which is new with
+  // every letter typed after the /.
   const [, remeasure] = useReducer((count: number) => count + 1, 0)
+  const open = Boolean(state.measure)
   useEffect(() => {
-    if (!state.measure) return
+    if (!open) return
     window.addEventListener('scroll', remeasure, true)
     window.addEventListener('resize', remeasure)
     return () => {
       window.removeEventListener('scroll', remeasure, true)
       window.removeEventListener('resize', remeasure)
     }
-  }, [state.measure])
+  }, [open])
 
   // Positioned against the caret, then nudged back inside the viewport. Flips
   // above the caret when there is no room below.
