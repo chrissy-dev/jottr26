@@ -131,7 +131,6 @@ function SignIn() {
               </label>
               <CodeField value={code} onChange={setCode} inputRef={codeRef} busy={busy} />
 
-              <Submit busy={busy} label="Sign in" icon="check" />
               {error && <ErrorNote>{error}</ErrorNote>}
 
               <button
@@ -158,7 +157,8 @@ const CODE_LENGTH = 6;
 
 /** Six boxes, but one real input laid over them, so typing, deleting,
  *  select-all and the one-time-code autofill all behave as a single field
- *  would. The boxes only draw its digits. */
+ *  would. The boxes only draw its digits. The form submits itself once the
+ *  last digit is in, however it arrived. */
 function CodeField({
   value,
   onChange,
@@ -173,13 +173,24 @@ function CodeField({
   const [focused, setFocused] = useState(false);
   const current = Math.min(value.length, CODE_LENGTH - 1);
 
+  const enter = (input: HTMLInputElement, digits: string) => {
+    if (digits.length < CODE_LENGTH) {
+      onChange(digits);
+      return;
+    }
+    // Flushed first, so the submit reads the whole code rather than the
+    // digits before it.
+    flushSync(() => onChange(digits));
+    if (!busy) input.form?.requestSubmit();
+  };
+
   return (
-    <div className="relative mt-1">
+    <div className={`relative mt-1 transition-opacity ${busy ? "opacity-60" : ""}`}>
       <div aria-hidden="true" className="grid grid-cols-6 gap-2">
         {Array.from({ length: CODE_LENGTH }, (_, index) => (
           <div
             key={index}
-            className={`grid place-items-center rounded-lg border py-2 leading-snug text-[length:var(--body-size)] font-medium text-ink transition-colors pointer-coarse:py-2.5 ${
+            className={`grid aspect-square place-items-center rounded-lg border leading-snug text-[length:var(--body-size)] font-medium text-ink transition-colors ${
               focused && index === current ? "border-[var(--accent)]" : "border-line"
             }`}
           >
@@ -191,12 +202,13 @@ function CodeField({
         id="code"
         ref={inputRef}
         required
+        readOnly={busy}
         inputMode="numeric"
         autoComplete="one-time-code"
         pattern="[0-9]*"
         maxLength={CODE_LENGTH}
         value={value}
-        onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
+        onChange={(event) => enter(event.currentTarget, event.target.value.replace(/\D/g, ""))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onSelect={(event) => {
@@ -211,22 +223,22 @@ function CodeField({
           }
         }}
         onPaste={(event) => {
-          // A pasted code signs in straight away. The state is flushed first
-          // so the submit reads the pasted code rather than the old one.
+          // Taken whole, so a code pasted along with the words around it
+          // still fills every box.
           const digits = event.clipboardData.getData("text").replace(/\D/g, "");
           if (digits.length !== CODE_LENGTH) return;
           event.preventDefault();
-          const form = event.currentTarget.form;
-          flushSync(() => onChange(digits));
-          if (!busy) form?.requestSubmit();
+          enter(event.currentTarget, digits);
         }}
-        className="absolute inset-0 size-full bg-transparent text-[length:var(--body-size)] text-transparent caret-transparent outline-none selection:bg-transparent"
+        // The lit box shows focus, so the page-wide focus ring, which would
+        // circle all six, is overruled.
+        className="absolute inset-0 size-full bg-transparent text-[length:var(--body-size)] text-transparent caret-transparent outline-none! selection:bg-transparent"
       />
     </div>
   );
 }
 
-function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "mail" | "check" }) {
+function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "mail" }) {
   return (
     <button
       type="submit"
