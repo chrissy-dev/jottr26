@@ -466,7 +466,7 @@ h1.page-title {
   flex-shrink: 0;
 }
 .ProseMirror div[data-type="subpages"] li > a {
-  color: var(--text);
+  color: var(--sidebar-text);
   font-weight: var(--body-weight);
   text-decoration: none;
 }
