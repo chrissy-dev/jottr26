@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { activeDatabase } from './dexie'
+import { editedKey } from './editedAt'
 import { bySortKey, liveChildren } from './pages'
 import type { PageRow } from './schema'
 
@@ -71,7 +72,8 @@ export function useDocReady(pageId: string): boolean | undefined {
   }, [pageId])
 }
 
-/** Written on every pause in typing, and drawn nowhere in the sidebar. */
+/** Drawn nowhere in the sidebar. Both were written on every pause in typing
+ *  by older builds, and can still arrive on rows they wrote. */
 const UNDRAWN = new Set<string>(['searchText', 'editedAt'])
 
 function sameForSidebar(a: PageRow, b: PageRow) {
@@ -118,6 +120,17 @@ export function useDrawnRows(pages: PageRow[]): PageRow[] {
     setDrawn(reuseRows(drawn, pages))
   }
   return drawn
+}
+
+/** When this device last typed in the page, or undefined if it never has.
+ *  A query of its own, so typing wakes only what shows this. */
+export function useEditedAt(pageId: string): number | undefined {
+  return useLiveQuery(async () => {
+    const db = activeDatabase()
+    if (!db) return undefined
+    const row = await db.meta.get(editedKey(pageId))
+    return row ? Number(row.value) : undefined
+  }, [pageId])
 }
 
 export interface TreeNode {

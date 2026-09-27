@@ -177,7 +177,7 @@ export function Workspace() {
             />
           )}
 
-          {page && <LastUpdated at={Math.max(page.updatedAt, page.editedAt ?? 0)} />}
+          {page && <LastUpdated page={page} />}
 
           {(page || view) && !trashEmpty ? (
             <div className="scroll-thin relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">

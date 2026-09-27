@@ -1,3 +1,4 @@
+import { lastTouched, type EditedTimes } from './editedAt'
 import type { PageRow } from './schema'
 
 export interface Hit {
@@ -24,17 +25,21 @@ function lowerBody(texts: SearchTexts, pageId: string) {
   return body
 }
 
-/** Typing moves `editedAt` and not `updatedAt`, as the sidebar reads it. */
-const lastTouched = (page: PageRow) => Math.max(page.updatedAt, page.editedAt ?? 0)
-
 /** Search runs over the local copy, so it answers as fast as you can type and
- *  keeps working on a train. Titles rank above body matches. */
-export function searchPages(pages: PageRow[], query: string, texts: SearchTexts = new Map()): Hit[] {
+ *  keeps working on a train. Titles rank above body matches. Typing in a page
+ *  counts as touching it, which `edited` holds and the row does not. */
+export function searchPages(
+  pages: PageRow[],
+  query: string,
+  texts: SearchTexts = new Map(),
+  edited: EditedTimes = new Map(),
+): Hit[] {
   const q = query.trim().toLowerCase()
+  const touched = (page: PageRow) => lastTouched(page, edited.get(page.id))
   if (!q) {
     return pages
       .slice()
-      .sort((a, b) => lastTouched(b) - lastTouched(a))
+      .sort((a, b) => touched(b) - touched(a))
       .slice(0, 12)
       .map((page) => ({ page, snippet: null }))
   }
@@ -59,7 +64,7 @@ export function searchPages(pages: PageRow[], query: string, texts: SearchTexts 
   }
 
   return scored
-    .sort((a, b) => b.score - a.score || lastTouched(b.hit.page) - lastTouched(a.hit.page))
+    .sort((a, b) => b.score - a.score || touched(b.hit.page) - touched(a.hit.page))
     .slice(0, 30)
     .map((entry) => entry.hit)
 }

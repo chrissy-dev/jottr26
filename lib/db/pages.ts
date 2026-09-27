@@ -2,6 +2,7 @@ import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import * as Y from 'yjs'
 import { activeDatabase, type JottrDB } from './dexie'
 import { PAGE_FIELDS, type PageField, type PageRow } from './schema'
+import { forgetEditedTimes, writeEditedAt } from './editedAt'
 import { forgetSearchTexts, writeSearchText } from './searchText'
 import { DOC_FIELD, forgetDocs, notifyLocalEdit, openDoc, readPlainText, readTitle } from './ydoc'
 import { newId } from '@/lib/util/id'
@@ -120,7 +121,7 @@ export async function createPage(options: { id?: string; parentId?: string; titl
 
 /** Mirrors the document back onto the row the sidebar reads, and into the
  *  text search reads. The title counts as a change worth syncing; the search
- *  text and edit time do not, so they are written without flagging the row. */
+ *  text and edit time do not, and are kept off the row (see editedAt.ts). */
 export async function refreshDerived(pageId: string) {
   // The editor flushes this as it closes, which can be just after its page
   // was purged or the account signed out of. The row is looked for first, so
@@ -134,7 +135,7 @@ export async function refreshDerived(pageId: string) {
   if (page.title !== title) await touch(pageId, { title })
 
   await writeSearchText(db(), pageId, readPlainText(handle.doc))
-  if (handle.editedAt > (page.editedAt ?? 0)) await db().pages.update(pageId, { editedAt: handle.editedAt })
+  if (handle.editedAt) await writeEditedAt(db(), pageId, handle.editedAt)
 }
 
 export async function toggleFavorite(pageId: string) {
@@ -272,6 +273,7 @@ export async function forgetPages(database: JottrDB, ids: string[]) {
       await database.docStates.bulkDelete(ids)
       await database.docUpdates.where('pageId').anyOf(ids).delete()
       await forgetSearchTexts(database, ids)
+      await forgetEditedTimes(database, ids)
     },
   )
   forgetDocs(ids)

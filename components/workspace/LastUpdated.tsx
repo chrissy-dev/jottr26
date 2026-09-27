@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { lastTouched } from '@/lib/db/editedAt'
+import { useEditedAt } from '@/lib/db/hooks'
+import type { PageRow } from '@/lib/db/schema'
 
 const relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
 const shortDate = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
@@ -25,7 +28,8 @@ function describeEdit(at: number, now: number) {
  *  the trail's last crumb — and lets clicks through. Left off touch screens,
  *  where the corner belongs to the page and the keyboard bar. Ticks every half minute so
  *  "just now" doesn't stay just now. */
-export function LastUpdated({ at }: { at: number }) {
+export function LastUpdated({ page }: { page: PageRow }) {
+  const at = lastTouched(page, useEditedAt(page.id))
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000)
