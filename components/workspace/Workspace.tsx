@@ -10,7 +10,7 @@ import { EmptyState } from './EmptyState'
 import { EnsureFirstPage } from './EnsureFirstPage'
 import { LastUpdated } from './LastUpdated'
 import { PagesContext } from './PagesContext'
-import { SettingsPage } from './SettingsPage'
+import { SettingsBar, SettingsPage } from './SettingsPage'
 import { Sidebar } from './Sidebar'
 import { StarButton } from './StarButton'
 import { TrashBar, TrashPage } from './TrashPage'
@@ -216,6 +216,16 @@ export function Workspace() {
                   }`}
                 >
                   <TrashBar pages={trashed ?? []} />
+                </div>
+              )}
+              {/* And the settings put the version there. */}
+              {!page && view === 'settings' && (
+                <div
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
+                    wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
+                  }`}
+                >
+                  <SettingsBar />
                 </div>
               )}
               {/* 700px of text, the same column Notion sets, plus the side padding:

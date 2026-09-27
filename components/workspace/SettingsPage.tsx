@@ -11,13 +11,20 @@ const THEMES: { value: Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ]
 
-const built = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
-})
+/** The build as YYYYMMDDHHMM, in this device's time, so a later deploy is
+ *  always the bigger number. */
+function buildStamp() {
+  const at = new Date(process.env.BUILD_TIME!)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${at.getFullYear()}${pad(at.getMonth() + 1)}${pad(at.getDate())}${pad(at.getHours())}${pad(at.getMinutes())}`
+}
+
+/** The build this device is running, which the service worker swaps for a new
+ *  deploy's on a later load. It takes the row the trail takes on a page, in the
+ *  same size and colour as the trail's last crumb. */
+export function SettingsBar() {
+  return <span className="flex h-8 items-center text-faint pointer-coarse:h-10">Version {buildStamp()}</span>
+}
 
 /** Laid out like a note, as the trash is: the same title, then the settings
  *  where the body would be. */
@@ -62,12 +69,6 @@ export function SettingsPage() {
       <SectionLabel>Sync status</SectionLabel>
       <SyncStatusRow onRetry={() => void retrySync.startSync()} />
       {retrySync.overlay}
-
-      {/* The build this device is running, which the service worker swaps for
-          a new deploy's on a later load. */}
-      <p className="mt-8 text-[12.5px] text-faint pointer-coarse:text-[13.5px]">
-        Version {process.env.BUILD_COMMIT} · built {built.format(new Date(process.env.BUILD_TIME!))}
-      </p>
     </>
   )
 }
