@@ -13,7 +13,7 @@ import { PagesContext } from './PagesContext'
 import { SettingsPage } from './SettingsPage'
 import { Sidebar } from './Sidebar'
 import { StarButton } from './StarButton'
-import { TrashPage } from './TrashPage'
+import { TrashBar, TrashPage } from './TrashPage'
 import { useWorkspace } from './WorkspaceProvider'
 import { usePageTrail, useEntryFromAbove } from './pageTrail'
 import { useSidebarDrawer } from './useSidebarDrawer'
@@ -205,6 +205,17 @@ export function Workspace() {
                 >
                   {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} truncate={wide} />}
                   <StarButton page={page} className="ml-auto rounded-md bg-sunken shadow-[var(--shadow-subtle)]" />
+                </div>
+              )}
+              {/* The trash takes the same row: its count where the trail would
+                  be, and the button to empty it where the star would be. */}
+              {!page && view === 'trash' && (
+                <div
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
+                    wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
+                  }`}
+                >
+                  <TrashBar pages={trashed ?? []} />
                 </div>
               )}
               {/* 700px of text, the same column Notion sets, plus the side padding:
