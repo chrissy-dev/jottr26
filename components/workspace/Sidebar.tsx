@@ -101,7 +101,7 @@ export function Sidebar({
         )}
       </nav>
 
-      <footer className="border-t border-line px-3 pt-[13px] pb-[max(13px,env(safe-area-inset-bottom))]">
+      <footer className="flex flex-col border-t border-line px-3 pt-[13px] pb-[max(13px,env(safe-area-inset-bottom))]">
         <SidebarAction
           icon="settings"
           label="Settings"
@@ -160,7 +160,8 @@ function SidebarAction({
       type="button"
       onClick={onClick}
       aria-current={current ? 'page' : undefined}
-      // Spaced as the page rows above are, the icon in the same slot.
+      // Spaced as the page rows above are, the icon in the same slot. The
+      // footer is a column, so the margins add up to the rows' 2px gap.
       className={`my-px flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-muted transition-colors pointer-coarse:py-2 ${
         current ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
       }`}
