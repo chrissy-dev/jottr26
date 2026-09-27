@@ -19,15 +19,16 @@ export default function LandingPage() {
       <SignedInRedirect />
       <main className="w-full max-w-[34rem]">
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-ink">Jottr</h1>
-        {/* Pre-encoded at 3x the column width and served as-is: running it through
-            next/image re-encodes and rescales it, which visibly softens the UI text. */}
+        {/* Pre-encoded at roughly 2.7x its displayed width and served as-is: running it through
+            next/image re-encodes and rescales it, which visibly softens the UI text. From md up
+            it overhangs the text column by 2rem each side. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/screenshot.webp"
           alt="Jottr open on a desktop, showing the page sidebar and the Welcome to Jottr note"
           width={1632}
           height={1062}
-          className="mt-4 h-auto w-full rounded-xl"
+          className="mt-4 h-auto w-full rounded-xl md:-mx-8 md:w-[calc(100%+4rem)] md:max-w-none"
         />
         <p className="mt-6 text-[15px] leading-relaxed text-muted">
           A notes app with the quality of life features of your favourite editor, and none of the
