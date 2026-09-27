@@ -68,6 +68,8 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+const isWorkspace = (url) => url.pathname === '/app' || url.pathname.startsWith('/app/')
+
 /** Content-hashed by the build, so a cached copy is never out of date. */
 const isStaticAsset = (url) => url.pathname.startsWith('/_next/static/')
 
@@ -103,14 +105,16 @@ self.addEventListener('fetch', (event) => {
   }
 })
 
-/** How long opening the app waits on the network before using the copy on the
- *  device. Offline fails at once; this is for the connection that is there
- *  but barely — one bar, a captive portal — which would otherwise hold a blank
- *  screen until the browser gave up, though every note is already local. */
+/** How long opening a page other than the workspace waits on the network
+ *  before using the copy on the device. Offline fails at once; this is for the
+ *  connection that is there but barely — one bar, a captive portal — which
+ *  would otherwise hold a blank screen until the browser gave up. */
 const NAVIGATION_TIMEOUT_MS = 3000
 
-/** Network first, so a deploy is picked up on the next load; cache second, so
- *  being offline, or nearly, is unremarkable. */
+/** The workspace comes from the device whenever there is a copy, and the
+ *  network only refreshes that copy for next time. Anything else is network
+ *  first, so a deploy is picked up on the next load; cache second, so being
+ *  offline, or nearly, is unremarkable. */
 async function handleNavigation(event, url) {
   const network = fetch(event.request)
   // Registered now, while the event is live: an answer that arrives after the
@@ -120,6 +124,16 @@ async function handleNavigation(event, url) {
       .then((response) => (response.ok ? storeShell(url.pathname, response.clone()) : undefined))
       .catch(() => undefined),
   )
+
+  // Waiting on the network here gained nothing but the newest deploy, and cost
+  // most on one bar of signal: a new deploy's page names scripts and a
+  // stylesheet not yet on the device, and nothing is drawn until they come
+  // down the same thin connection. The copy on the device has all of its own,
+  // so it opens as it does offline, and a deploy lands one launch later.
+  if (isWorkspace(url)) {
+    const shell = await (await caches.open(SHELL_CACHE)).match('/app')
+    if (shell) return shell
+  }
 
   const slow = new Promise((resolve) => setTimeout(resolve, NAVIGATION_TIMEOUT_MS, null))
   try {
@@ -143,7 +157,7 @@ async function cachedPage(url) {
   // Any workspace URL falls back to the workspace shell: it is a client
   // component that reads the page id from the query string itself, so the
   // cached document is correct for every /app URL.
-  if (url.pathname === '/app' || url.pathname.startsWith('/app/')) {
+  if (isWorkspace(url)) {
     const shell = await cache.match('/app')
     if (shell) return shell
   }

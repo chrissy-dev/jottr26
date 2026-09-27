@@ -24,8 +24,17 @@ import { useOpenPageId, useView, type View } from '@/lib/util/route'
 // The editor is the heaviest thing in the app and nobody needs it until a page
 // is open, so it loads as its own chunk and never during hydration.
 const loadEditor = () => import('@/components/editor/Editor')
+// While it downloads the page column would otherwise be empty, which on a phone,
+// with the sidebar shut, is the whole screen. Held back a moment, so an editor
+// already on the device never flashes it.
 const Editor = dynamic(() => loadEditor().then((m) => m.Editor), {
   ssr: false,
+  loading: () => (
+    <div className="appear-late flex items-center gap-1.5 text-muted">
+      <Icon name="refresh" size={16} className="animate-spin" />
+      <span>Loading the editor…</span>
+    </div>
+  ),
 })
 
 export function Workspace() {
