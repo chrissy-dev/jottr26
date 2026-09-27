@@ -129,7 +129,7 @@ function AddPage({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       // Lines up with the pages above it, the plus sitting where each page's
       // icon sits.
-      className="my-[1.5px] flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:py-2"
+      className="my-px flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:py-2"
     >
       <span className="grid size-5 shrink-0 place-items-center pointer-coarse:size-6">
         <Icon name="plus" size={15} strokeWidth={2} />
@@ -177,7 +177,7 @@ function SidebarAction({
       type="button"
       onClick={onClick}
       aria-current={current ? 'page' : undefined}
-      className={`my-[1.5px] flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-muted transition-colors pointer-coarse:py-2.5 ${
+      className={`my-[0.5px] flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-muted transition-colors pointer-coarse:py-2.5 ${
         current ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
       }`}
     >
