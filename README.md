@@ -24,6 +24,11 @@ goes into your real account.
 
 `npm test`, `npm run typecheck` and `npm run lint` do what you'd expect.
 
+## Self-hosting
+
+Jottr can also run without Supabase or Vercel, on your own computer or
+server, with notes kept in SQLite. See [self-host/README.md](self-host/README.md).
+
 ## Worth knowing
 
 - The database schema is all in `supabase/schema.sql`. It's safe to re-run, so

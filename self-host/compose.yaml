@@ -1,0 +1,41 @@
+# Jottr on a server with its own domain, with HTTPS from Let's Encrypt.
+#
+#   cp self-host/.env.example self-host/.env   # then fill it in
+#   docker compose -f self-host/compose.yaml up -d
+#
+# Point the domain's DNS at the server first, and open ports 80 and 443.
+
+services:
+  jottr:
+    build:
+      context: ..
+      args:
+        SITE_URL: https://${JOTTR_DOMAIN}
+    restart: unless-stopped
+    environment:
+      JOTTR_AUTH: ${JOTTR_AUTH:-password}
+      JOTTR_PASSWORD: ${JOTTR_PASSWORD:-}
+    volumes:
+      # A named volume, so the container's user owns it from the start.
+      - jottr-data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      JOTTR_DOMAIN: ${JOTTR_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - jottr
+
+volumes:
+  jottr-data:
+  caddy-data:
+  caddy-config:

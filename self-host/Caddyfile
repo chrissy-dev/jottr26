@@ -1,0 +1,7 @@
+{$JOTTR_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy jottr:8080 {
+		# The change stream is long-lived; send each event as it comes.
+		flush_interval -1
+	}
+}
