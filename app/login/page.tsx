@@ -105,7 +105,7 @@ function SignIn() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
-                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-1.5 leading-snug text-[length:var(--body-size)] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2"
+                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-2 leading-snug text-[length:var(--body-size)] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2.5"
               />
 
               <Submit busy={busy} label="Send sign in code" icon="mail" />
@@ -139,7 +139,7 @@ function SignIn() {
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
                 placeholder="000000"
-                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-1.5 leading-snug text-center text-[length:var(--body-size)] font-medium tracking-[0.35em] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2"
+                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-2 leading-snug text-center text-[length:var(--body-size)] font-medium tracking-[0.35em] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2.5"
               />
 
               <Submit busy={busy} label="Sign in" icon="check" />
@@ -170,7 +170,7 @@ function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "ma
     <button
       type="submit"
       disabled={busy}
-      className="mt-3 flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
+      className="mt-3 flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2.5"
     >
       {busy ? (
         <Icon name="refresh" size={14} className="animate-spin" />
