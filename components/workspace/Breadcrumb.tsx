@@ -1,6 +1,7 @@
 'use client'
 
-import { useLayoutEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useScrollFade } from '@/components/editor/useScrollFade'
 import { Icon } from '@/components/ui/Icon'
 import type { PageRow } from '@/lib/db/schema'
 
@@ -10,7 +11,8 @@ import type { PageRow } from '@/lib/db/schema'
  *  wide screen a deep trail cuts the titles short. On a narrow screen it
  *  won't fit either, so rather than cutting the titles short it scrolls
  *  sideways, starting at the right-hand end with the open page, and the
- *  reader swipes back for the rest. */
+ *  reader swipes back for the rest, its ends fading out as the mobile
+ *  toolbar's do while there is more past them. */
 export function Breadcrumb({
   trail,
   onOpen,
@@ -20,7 +22,15 @@ export function Breadcrumb({
   onOpen: (id: string | null) => void
   truncate?: boolean
 }) {
-  const navRef = useRef<HTMLElement>(null)
+  const navRef = useRef<HTMLElement | null>(null)
+  const fade = useScrollFade()
+  const setNav = useCallback(
+    (nav: HTMLElement | null) => {
+      navRef.current = nav
+      fade(nav)
+    },
+    [fade],
+  )
   // Keyed on the titles as well as the ids, so renaming a page, which changes
   // how wide the trail is, puts the open page back in view.
   const trailKey = trail.map((crumb) => `${crumb.id}:${crumb.title}`).join('/')
@@ -42,12 +52,12 @@ export function Breadcrumb({
 
   return (
     <nav
-      ref={navRef}
+      ref={setNav}
       aria-label="Breadcrumb"
       className={`pointer-events-auto flex h-8 min-w-0 items-center gap-1.5 pointer-coarse:h-10 ${
         truncate
           ? 'overflow-hidden'
-          : 'overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+          : 'scroll-fade overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       }`}
     >
       {trail.map((crumb, index) => (
