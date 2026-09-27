@@ -108,7 +108,7 @@ function SignIn() {
                 className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-1.5 leading-snug text-[length:var(--body-size)] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2"
               />
 
-              <Submit busy={busy} label="Send me a sign in code" icon="mail" />
+              <Submit busy={busy} label="Send sign in code" icon="mail" />
               {error && <ErrorNote>{error}</ErrorNote>}
             </form>
           ) : (
@@ -170,7 +170,7 @@ function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "ma
     <button
       type="submit"
       disabled={busy}
-      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
+      className="mt-3 flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
     >
       {busy ? (
         <Icon name="refresh" size={14} className="animate-spin" />
