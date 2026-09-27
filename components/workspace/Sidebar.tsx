@@ -85,7 +85,7 @@ export function Sidebar({
         )}
       </nav>
 
-      <footer className="border-t border-line px-3 pt-1.5 pb-[max(13px,env(safe-area-inset-bottom))]">
+      <footer className="border-t border-line px-3 pt-[19px] pb-[max(13px,env(safe-area-inset-bottom))]">
         <SidebarAction
           icon="settings"
           label="Settings"
