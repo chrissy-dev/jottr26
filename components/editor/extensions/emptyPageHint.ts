@@ -10,7 +10,9 @@ export const EMPTY_PAGE_HINT = "Write something, or press '/' for blocks"
 export function emptyPageHintAt(state: EditorState): { from: number; to: number } | null {
   const { doc, selection } = state
   const { anchor } = selection
-  let pos = doc.child(0).nodeSize
+  // No title yet, as a document mid-way through binding to Yjs can be.
+  if (!doc.firstChild) return null
+  let pos = doc.firstChild.nodeSize
   let hint: { from: number; to: number } | null = null
   for (let index = 1; index < doc.childCount; index += 1) {
     const block = doc.child(index)
