@@ -70,7 +70,7 @@ export function SettingsPage() {
         <Row label="Theme">
           <ThemeSwitch />
         </Row>
-        <Row label="Sync">
+        <Row label="Sync Status">
           <SyncStatus onRetry={() => void retrySync.startSync()} />
         </Row>
       </ul>
