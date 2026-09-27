@@ -218,7 +218,7 @@ export function Workspace() {
                 ) : view === 'settings' ? (
                   <SettingsPage />
                 ) : (
-                  <TrashPage />
+                  <TrashPage pages={trashed ?? []} />
                 )}
               </div>
             </div>
