@@ -885,12 +885,16 @@ h1.page-title {
   text-decoration-color: var(--accent);
 }
 
-.ProseMirror .is-empty::before {
+.ProseMirror :is(.is-empty, .empty-page-hint)::before {
   content: attr(data-placeholder);
   color: var(--text-faint);
   float: left;
   height: 0;
   pointer-events: none;
+}
+/* Its own attribute, so Placeholder's empty one on the same line can't win. */
+.ProseMirror .empty-page-hint::before {
+  content: attr(data-hint);
 }
 
 /* A box's own shade would hide that tint, so a selected callout or accordion

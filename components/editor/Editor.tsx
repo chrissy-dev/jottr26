@@ -9,6 +9,7 @@ import { Placeholder } from '@tiptap/extension-placeholder'
 import { pageExtensions } from './extensions/page'
 import { Subpages } from './extensions/subpages'
 import { createSlashExtension } from './extensions/slash'
+import { EmptyPageHint } from './extensions/emptyPageHint'
 import { slashHandlers } from './slashBridge'
 import { SlashMenu } from './SlashMenu'
 import { useSlashMenu } from './useSlashMenu'
@@ -97,28 +98,20 @@ function editorExtensions(doc: Y.Doc, pageId: string): Extensions {
     }),
     Collaboration.configure({ document: doc }),
     Placeholder.configure({
-      // Shown on every empty node so the title always reads 'Untitled',
-      // while body placeholders appear only where the caret is.
+      // Shown on every empty node so the title always reads 'Untitled'. The
+      // body's hint, only where the caret is, is EmptyPageHint's.
       showOnlyCurrent: false,
       // Looks inside blocks too, which is where an accordion's heading is.
       includeChildren: true,
       emptyNodeClass: 'is-empty',
-      placeholder: ({ editor: instance, node, hasAnchor }) => {
+      placeholder: ({ node }) => {
         if (node.type.name === 'title') return 'Untitled'
         // An empty heading would leave a chevron with nothing beside it.
         if (node.type.name === 'accordionTitle') return 'Title'
-        if (!hasAnchor || node.type.name !== 'paragraph') return ''
-        // Only while the page has no body yet: nothing after the title but
-        // empty paragraphs, however many. A blank line on a page with
-        // content gets none.
-        const { doc: page } = instance.state
-        for (let index = 1; index < page.childCount; index += 1) {
-          const block = page.child(index)
-          if (block.type.name !== 'paragraph' || block.childCount > 0) return ''
-        }
-        return "Write something, or press '/' for blocks"
+        return ''
       },
     }),
+    EmptyPageHint,
     createSlashExtension(slashHandlers),
   ]
 }

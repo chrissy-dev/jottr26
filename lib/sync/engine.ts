@@ -222,7 +222,9 @@ export class SyncEngine {
 
     // Not 'syncing': this tab may never be the one that syncs, and nothing but
     // a finished sync would move it on. A slow first sync announces itself.
-    const lastSyncedAt = await readMeta<number | null>(this.db, META_LAST_SYNCED, null)
+    // A failed read must not end start() here: running is already set, so
+    // nothing would ever set up the listeners, and this tab would never sync.
+    const lastSyncedAt = await readMeta<number | null>(this.db, META_LAST_SYNCED, null).catch(() => null)
     await this.refreshPending({ lastSyncedAt, phase: navigator.onLine ? 'synced' : 'offline' })
     // Stopped while those reads were out — a StrictMode remount, or a sign-out
     // straight after sign-in. stop() has already run its cleanups, so nothing

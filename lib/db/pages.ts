@@ -57,9 +57,13 @@ function siblingsOf(parentId: string): Promise<PageRow[]> {
 /** The pages directly under these parents that are not in the trash, in
  *  sidebar order. `''` is the root. */
 export async function liveChildren(database: JottrDB, parentIds: string | string[]) {
-  const keys = (typeof parentIds === 'string' ? [parentIds] : parentIds).map((id) => [0, id])
-  const rows = await database.pages.where('[deletedAt+parentId]').anyOf(keys).toArray()
-  return rows.sort(bySortKey)
+  const ids = typeof parentIds === 'string' ? [parentIds] : parentIds
+  // One equals() per parent rather than anyOf(): anyOf walks a cursor row by
+  // row, where equals() is a single getAll.
+  const lists = await Promise.all(
+    ids.map((id) => database.pages.where('[deletedAt+parentId]').equals([0, id]).toArray()),
+  )
+  return lists.flat().sort(bySortKey)
 }
 
 export const bySortKey = (a: PageRow, b: PageRow) =>

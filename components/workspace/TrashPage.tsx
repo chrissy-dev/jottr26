@@ -2,17 +2,13 @@
 
 import { Icon } from '@/components/ui/Icon'
 import { deleteForever, emptyTrash, restorePage } from '@/lib/db/pages'
-import { useTrashedPages } from '@/lib/db/hooks'
-import { useWorkspace } from './WorkspaceProvider'
+import type { PageRow } from '@/lib/db/schema'
 
 const when = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
 
 /** Laid out like a note: the same title, then the trashed pages where the body
  *  would be. It sits in the page's column, so it takes the page's padding. */
-export function TrashPage() {
-  const { userId } = useWorkspace()
-  const pages = useTrashedPages(userId) ?? []
-
+export function TrashPage({ pages }: { pages: PageRow[] }) {
   return (
     <>
       <div className="flex items-baseline gap-4">
