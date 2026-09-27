@@ -205,7 +205,7 @@ export function Workspace() {
                   }`}
                 >
                   {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} truncate={wide} />}
-                  <StarButton page={page} className="ml-auto rounded-md bg-sunken" />
+                  <StarButton page={page} className="ml-auto rounded-md bg-sunken shadow-[var(--shadow-subtle)]" />
                 </div>
               )}
               {/* 700px of text, the same column Notion sets, plus the side padding:
