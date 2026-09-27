@@ -6,13 +6,13 @@
    step with whichever is showing.
    --------------------------------------------------------------------------- */
 :root {
-  /* Paper on a desk: the page is a faintly warm off-white, and the sidebar a
-     clear step darker, so the two panes read apart. Menus stay pure white,
-     lifted off the page. */
-  --surface: #fcfbf7;
-  --surface-sunken: #f7f6f2;
+  /* The page is pure white; the sidebar and the tinted blocks on the page
+     share one faintly warm off-white. Menus are white too, lifted off the
+     page by their shadow. */
+  --surface: #ffffff;
+  --surface-sunken: #f9f8f6;
   --surface-raised: #ffffff;
-  --sidebar: #f5f4ef;
+  --sidebar: #f9f8f6;
   --overlay: rgb(23 23 22 / 0.28);
 
   /* The darkest any text goes, in the notes and the UI alike: a soft
@@ -28,11 +28,12 @@
   --line: #e9e8e4;
   --line-strong: #dcdbd6;
 
-  --hover: rgb(23 23 22 / 0.045);
+  /* A hovered row and the open page's row share one shade. --active, which
+     marks pressed buttons and menu items, stays translucent so it still
+     reads as a step darker over a hovered row. */
+  --hover: #eeeded;
   --active: rgb(23 23 22 / 0.075);
-  /* The open page's row in the sidebar: lighter than --active, which also
-     marks pressed buttons and menu items, but still a step past hover. */
-  --selected: rgb(23 23 22 / 0.058);
+  --selected: #eeeded;
 
   /* Jottr's own ink: a muted indigo, bluer than violet, rather than the stock
      link blue. Kept dusty so it sits with the warm greys instead of shouting
