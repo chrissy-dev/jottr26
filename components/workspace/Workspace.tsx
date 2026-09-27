@@ -239,7 +239,7 @@ export function Workspace() {
                   column. */}
               <div
                 key={page?.id ?? view}
-                className={`page-enter mx-auto w-full max-w-[780px] px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
+                className={`page-enter mx-auto w-full max-w-[780px] has-[[data-editor-error]]:flex has-[[data-editor-error]]:min-h-full has-[[data-editor-error]]:flex-col has-[[data-editor-error]]:py-0 px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
                   wide
                     ? 'pt-28'
                     : 'pt-[calc(max(0.5rem,env(safe-area-inset-top))+4.5rem)] pointer-coarse:pt-[calc(max(0.5rem,env(safe-area-inset-top))+5rem)]'
