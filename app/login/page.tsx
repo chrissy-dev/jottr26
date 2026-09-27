@@ -77,8 +77,8 @@ function SignIn() {
 
   return (
     <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-sunken px-5">
-      <div className="w-full max-w-[360px]">
-        <div className="rounded-xl border border-line bg-raised p-5 shadow-[var(--shadow-subtle)]">
+      <div className="w-full max-w-[420px]">
+        <div className="rounded-xl border border-line bg-raised p-8 shadow-[var(--shadow-subtle)]">
           {stage === "email" ? (
             <form onSubmit={sendCode}>
               <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
