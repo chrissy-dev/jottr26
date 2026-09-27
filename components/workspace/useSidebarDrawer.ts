@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 /** Wide enough for the sidebar to sit beside the page rather than over it. */
 export const WIDE_QUERY = '(min-width: 880px)'
@@ -37,19 +37,22 @@ export function useSidebarDrawer() {
   // the drawer reappear on the page being swiped back to.
   const pending = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(pending.current), [])
-  const afterDrawerShuts = useCallback(
-    (go: () => void) => {
-      window.clearTimeout(pending.current)
-      if (wide || !sidebarOpen) {
-        go()
-        return
-      }
-      setSidebarOpen(false)
-      // The slide's 200ms, and a little over for its last frame to be shown.
-      pending.current = window.setTimeout(go, 250)
-    },
-    [wide, sidebarOpen],
-  )
+  // Read through a ref so the callback keeps one identity: every sidebar row
+  // takes it as a prop, and would otherwise all redraw as the drawer slides.
+  const drawer = useRef({ wide, sidebarOpen })
+  useLayoutEffect(() => {
+    drawer.current = { wide, sidebarOpen }
+  }, [wide, sidebarOpen])
+  const afterDrawerShuts = useCallback((go: () => void) => {
+    window.clearTimeout(pending.current)
+    if (drawer.current.wide || !drawer.current.sidebarOpen) {
+      go()
+      return
+    }
+    setSidebarOpen(false)
+    // The slide's 200ms, and a little over for its last frame to be shown.
+    pending.current = window.setTimeout(go, 250)
+  }, [])
 
   return { wide, sidebarOpen, setSidebarOpen, afterDrawerShuts }
 }
