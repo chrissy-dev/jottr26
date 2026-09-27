@@ -1,7 +1,7 @@
 'use client'
 
 import { Icon } from '@/components/ui/Icon'
-import { SyncStatusRow, useRetrySync } from './SyncControls'
+import { SyncStatus, useRetrySync } from './SyncControls'
 import { useSyncStatus, useWorkspace } from './WorkspaceProvider'
 import { setTheme, useTheme, type Theme } from '@/lib/util/theme'
 
@@ -63,50 +63,49 @@ export function SettingsPage() {
     <>
       <h1 className="page-title">Settings</h1>
 
-      <SectionLabel>Account</SectionLabel>
-      <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)] text-ink">
-        <Icon name="user" size={15} className="shrink-0 text-faint" />
-        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{session?.user.email}</span>
-      </div>
-
-      <SectionLabel>Appearance</SectionLabel>
-      <ThemeRow />
-
-      <SectionLabel>Sync status</SectionLabel>
-      <SyncStatusRow onRetry={() => void retrySync.startSync()} />
+      <ul className="divide-y divide-line border-y border-line text-[length:var(--body-size)]">
+        <Row label="Account">
+          <span className="min-w-0 truncate text-muted">{session?.user.email}</span>
+        </Row>
+        <Row label="Theme">
+          <ThemeSwitch />
+        </Row>
+        <Row label="Sync">
+          <SyncStatus onRetry={() => void retrySync.startSync()} />
+        </Row>
+      </ul>
       {retrySync.overlay}
     </>
   )
 }
 
-function ThemeRow() {
+function ThemeSwitch() {
   const theme = useTheme()
   return (
-    <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)]">
-      <span className="flex-1 text-ink">Theme</span>
-      <div className="flex rounded-md border border-line p-px">
-        {THEMES.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={theme === value}
-            onClick={() => setTheme(value)}
-            className={`rounded-[5px] px-2 py-0.5 text-[12.5px] font-medium transition-colors pointer-coarse:py-1 pointer-coarse:text-[13.5px] ${
-              theme === value ? 'bg-[var(--selected)] text-ink' : 'text-muted hover:bg-[var(--hover)] hover:text-ink'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+    <div className="flex shrink-0 rounded-md border border-line p-px">
+      {THEMES.map(({ value, label }) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={theme === value}
+          onClick={() => setTheme(value)}
+          className={`rounded-[5px] px-2 py-0.5 text-[12.5px] font-medium transition-colors pointer-coarse:py-1 pointer-coarse:text-[13.5px] ${
+            theme === value ? 'bg-[var(--selected)] text-ink' : 'text-muted hover:bg-[var(--hover)] hover:text-ink'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+/** One setting: what it is on the left, its value or control on the right. */
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <p className="mt-6 border-b border-line pb-1.5 text-[11.5px] font-semibold uppercase tracking-wide text-faint pointer-coarse:text-[12.5px]">
-      {children}
-    </p>
+    <li className="flex min-h-12 items-center gap-4 py-2 pointer-coarse:min-h-14">
+      <span className="shrink-0 text-ink">{label}</span>
+      <span className="ml-auto flex min-w-0 items-center justify-end">{children}</span>
+    </li>
   )
 }
