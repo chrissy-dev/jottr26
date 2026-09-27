@@ -38,10 +38,10 @@ describe('sidebar tree', () => {
   })
 
   it('keeps last time\'s list when only sync\'s bookkeeping moved on', () => {
-    const before = [row('a'), { ...row('b'), dirty: 1, dirtyFields: ['title' as const] }]
+    const before = [row('a'), { ...row('b'), dirty: 1 as const, dirtyFields: ['title' as const] }]
     const pushed = [
       { ...before[0], updatedAt: 7, serverUpdatedAt: 7 },
-      { ...before[1], dirty: 0, dirtyFields: [], updatedAt: 8, serverUpdatedAt: 8 },
+      { ...before[1], dirty: 0 as const, dirtyFields: [], updatedAt: 8, serverUpdatedAt: 8 },
     ]
     assert.equal(reuseRows(before, pushed), before)
   })
