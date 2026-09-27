@@ -130,7 +130,7 @@ export function Workspace() {
             className={wide ? 'h-full' : 'h-full w-full'}
             style={wide ? { width: width + SIDEBAR_INSET * 2, padding: SIDEBAR_INSET } : undefined}
           >
-            <div className={wide ? 'h-full overflow-hidden rounded-xl' : 'h-full'}>
+            <div className={wide ? 'h-full overflow-hidden rounded-xl shadow-[var(--shadow-subtle)]' : 'h-full'}>
               <Sidebar
                 pages={pages}
                 openId={openId}
