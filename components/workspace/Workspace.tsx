@@ -152,12 +152,9 @@ export function Workspace() {
         )}
 
         <main className="relative flex min-w-0 flex-1 flex-col">
-          {/* The top left: the way back to a hidden sidebar, then, on a wide
-              screen, the open page's trail. Both float over the page rather
-              than scrolling away with it, on one line with the star in the
-              opposite corner — same top, same height, same distance in from the
-              edge — and stop short of it. The row itself lets clicks through to
-              the page; only what is drawn in it takes them. */}
+          {/* The top left: the way back to a hidden sidebar. It floats over
+              the page rather than scrolling away with it. The row itself lets
+              clicks through to the page; only what is drawn in it takes them. */}
           <div className="float-top pointer-events-none absolute left-2 right-12 z-30 flex min-w-0 items-center gap-2 pointer-coarse:right-14">
             {/* It keeps the old top bar's backdrop: on a phone the page's left
                 edge passes underneath. There it is always on screen, so it gets
@@ -173,30 +170,24 @@ export function Workspace() {
                 <Icon name="panel" size={18} className="pointer-coarse:size-5" />
               </button>
             )}
-            {wide && page && trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} floating />}
           </div>
-
-          {/* The top-right counterpart of the sidebar button, with the same
-              backdrop for the same reason, on the same line as the sidebar's
-              header. */}
-          {wide && page && (
-            <StarButton
-              page={page}
-              className="float-top float-backdrop absolute right-2 z-30"
-            />
-          )}
 
           {page && <LastUpdated page={page} />}
 
           {(page || view) && !trashEmpty ? (
-            <div className="scroll-thin relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-              {/* On a narrow screen the trail and the star are part of the page:
-                  they start level with the sidebar button, the trail just past
-                  it, but scroll away with the text rather than floating over
-                  it, so they need no backdrop. */}
-              {!wide && page && (
-                <div className="float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 pl-10 pointer-coarse:pl-12">
-                  {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} />}
+            <div className="scrollbar-none relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+              {/* The trail and the star are part of the page: they start level
+                  with the sidebar button, the trail just past it, but scroll
+                  away with the text rather than floating over it, so they need
+                  no backdrop. On a wide screen the trail only steps aside while
+                  the button is there. */}
+              {page && (
+                <div
+                  className={`float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 ${
+                    wide && sidebarOpen ? '' : 'pl-10 pointer-coarse:pl-12'
+                  }`}
+                >
+                  {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} truncate={wide} />}
                   <StarButton page={page} className="ml-auto rounded-md" />
                 </div>
               )}

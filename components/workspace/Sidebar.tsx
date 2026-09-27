@@ -63,7 +63,7 @@ export function Sidebar({
           if (event.clientX - bounds.left >= event.currentTarget.clientWidth) return
           onOpen(null)
         }}
-        className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-[max(0.5rem,env(safe-area-inset-top))]"
+        className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-[max(0.5rem,env(safe-area-inset-top))]"
       >
         <div className="flex items-start justify-between">
           <SectionLabel>Pages</SectionLabel>

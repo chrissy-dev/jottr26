@@ -97,7 +97,7 @@ export function SlashList({
       aria-label="Insert block"
       // A drag that reaches the end of the list stops there rather than
       // carrying on into the page behind it.
-      className={`scroll-thin relative overflow-y-auto overscroll-contain ${className}`}
+      className={`scrollbar-none relative overflow-y-auto overscroll-contain ${className}`}
     >
       {state.items.map((item, index) => {
         const active = index === state.index

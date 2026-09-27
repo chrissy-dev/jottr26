@@ -207,26 +207,13 @@ body {
   }
 }
 
-/* Thin, unobtrusive scrollbars that only show up when there is something to
-   scroll — the sidebar spends most of its life not needing them. */
-@supports (scrollbar-width: thin) {
-  .scroll-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
-  }
+/* No scrollbars anywhere: the page, the sidebar and the menus all still scroll
+   by wheel, trackpad, touch and keyboard, just without a bar showing. */
+.scrollbar-none {
+  scrollbar-width: none;
 }
-.scroll-thin::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-.scroll-thin::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
-  border: 3px solid transparent;
-  background-clip: content-box;
-  border-radius: 999px;
-}
-.scroll-thin::-webkit-scrollbar-track {
-  background: transparent;
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* The buttons and trail that float over the top of the page: the line they

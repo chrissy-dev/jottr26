@@ -156,7 +156,7 @@ export function LinkPicker({
       {rows.length > 0 && (
         <ul
           ref={listRef}
-          className="scroll-thin mt-1 max-h-56 overflow-y-auto border-t border-line pt-1"
+          className="scrollbar-none mt-1 max-h-56 overflow-y-auto border-t border-line pt-1"
         >
           {rows.map((row, i) => (
             <li key={row.kind === 'page' ? row.pageId : 'url'}>
