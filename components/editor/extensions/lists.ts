@@ -1,3 +1,4 @@
+import type { Editor } from '@tiptap/core'
 import { ListItem as BaseListItem } from '@tiptap/extension-list'
 import { Fragment, Slice, type Node } from '@tiptap/pm/model'
 import { TextSelection, type Command, type Transaction } from '@tiptap/pm/state'
@@ -129,6 +130,18 @@ export function sinkFromFirstItem(): Command {
   }
 }
 
+/** Whether the selection starts inside a list item. Tab and Shift-Tab there
+ *  are the list's even when the item can go no further in or out — the first
+ *  item of a list, with nothing above to go under — rather than falling
+ *  through to the browser, which moves focus out of the page. */
+function inListItem(editor: Editor) {
+  const { $from } = editor.state.selection
+  for (let depth = $from.depth; depth > 0; depth--) {
+    if ($from.node(depth).type.name === LIST_ITEM) return true
+  }
+  return false
+}
+
 export const ListItem = BaseListItem.extend({
   content,
 
@@ -140,8 +153,8 @@ export const ListItem = BaseListItem.extend({
     const { editor, name } = this
     return {
       Enter: () => enter() || (editor.can().splitListItem(name) && editor.commands.splitListItem(name)),
-      Tab: () => tab() || (editor.can().sinkListItem(name) && editor.commands.sinkListItem(name)),
-      'Shift-Tab': () => editor.can().liftListItem(name) && editor.commands.liftListItem(name),
+      Tab: () => tab() || (editor.can().sinkListItem(name) && editor.commands.sinkListItem(name)) || inListItem(editor),
+      'Shift-Tab': () => (editor.can().liftListItem(name) && editor.commands.liftListItem(name)) || inListItem(editor),
       Backspace: pm(this.editor, backspaceNestedItem(), backspaceAfterList()),
     }
   },
