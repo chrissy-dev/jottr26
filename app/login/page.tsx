@@ -81,7 +81,7 @@ function SignIn() {
         <div className="rounded-xl border border-line bg-raised p-5 shadow-[var(--shadow-subtle)]">
           {stage === "email" ? (
             <form onSubmit={sendCode}>
-              <h1 className="text-[length:var(--body-size)] font-semibold text-ink">
+              <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
                 Sign into Jottr
               </h1>
               <p className="mt-1 leading-relaxed text-muted">
@@ -113,7 +113,7 @@ function SignIn() {
             </form>
           ) : (
             <form onSubmit={verify}>
-              <h1 className="text-[length:var(--body-size)] font-semibold text-ink">
+              <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-ink">
                 Check your email
               </h1>
               <p className="mt-1 leading-relaxed text-muted">
