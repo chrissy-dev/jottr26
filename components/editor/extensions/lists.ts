@@ -1,6 +1,7 @@
 import { ListItem as BaseListItem } from '@tiptap/extension-list'
-import type { Node } from '@tiptap/pm/model'
+import { Fragment, Slice, type Node } from '@tiptap/pm/model'
 import { TextSelection, type Command, type Transaction } from '@tiptap/pm/state'
+import { ReplaceAroundStep } from '@tiptap/pm/transform'
 import { pm, removeBlockToAbove } from './helpers'
 
 /** A list item whose first line can be an accordion as well as a paragraph.
@@ -94,17 +95,52 @@ export function backspaceAfterList(): Command {
   }
 }
 
+/** Tab, over several items starting at the first of their list: the rest go
+ *  under that first one, which has no item above it to go under itself.
+ *  Tiptap's sink takes the items as a block and, finding no room for the
+ *  first, turns the key down for all of them, and the browser then moves
+ *  focus out of the page. Anywhere else it nests every selected item already. */
+export function sinkFromFirstItem(): Command {
+  return (state, dispatch) => {
+    const { $from, $to } = state.selection
+    const item = state.schema.nodes[LIST_ITEM]
+    const range = $from.blockRange($to, (node) => node.childCount > 0 && node.firstChild!.type === item)
+    if (!range || range.startIndex !== 0 || range.endIndex - range.startIndex < 2) return false
+    const { parent } = range
+    const first = parent.child(0)
+    if (first.type !== item) return false
+
+    if (dispatch) {
+      // As Tiptap's sink does it, from the second item on: the items are
+      // wrapped in a list of their own and taken into the first, joining
+      // any list already nested under it.
+      const nested = first.lastChild!.type === parent.type
+      const slice = new Slice(
+        Fragment.from(item.create(null, Fragment.from(parent.type.create(null, nested ? item.create() : null)))),
+        nested ? 3 : 1,
+        0,
+      )
+      const before = range.start + first.nodeSize
+      const after = range.end
+      const step = new ReplaceAroundStep(before - (nested ? 3 : 1), after, before, after, slice, 1, true)
+      dispatch(state.tr.step(step).scrollIntoView())
+    }
+    return true
+  }
+}
+
 export const ListItem = BaseListItem.extend({
   content,
 
   addKeyboardShortcuts() {
     const enter = pm(this.editor, enterNestedList())
+    const tab = pm(this.editor, sinkFromFirstItem())
     // Asked first, since editor.commands dispatches even when the command
     // declines, and outside a list these decline on every press.
     const { editor, name } = this
     return {
       Enter: () => enter() || (editor.can().splitListItem(name) && editor.commands.splitListItem(name)),
-      Tab: () => editor.can().sinkListItem(name) && editor.commands.sinkListItem(name),
+      Tab: () => tab() || (editor.can().sinkListItem(name) && editor.commands.sinkListItem(name)),
       'Shift-Tab': () => editor.can().liftListItem(name) && editor.commands.liftListItem(name),
       Backspace: pm(this.editor, backspaceNestedItem(), backspaceAfterList()),
     }

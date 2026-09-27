@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import { getExtensionField, getSchemaTypeByName, type KeyboardShortcutCommand } from '@tiptap/core'
 import { EditorState, TextSelection } from '@tiptap/pm/state'
 import type { Node } from '@tiptap/pm/model'
-import { backspaceNestedItem, enterNestedList } from '@/components/editor/extensions/lists'
+import { backspaceNestedItem, enterNestedList, nestedList, sinkFromFirstItem } from '@/components/editor/extensions/lists'
 import { headlessEditor, pageSchema as schema, paragraph, run } from './editor'
 
 function list(type: string, ...items: Node[][]) {
@@ -96,6 +96,59 @@ describe('Backspace in a nested list', () => {
     // A line with words on it.
     const words = caretAfter('one', list('bulletList', [paragraph('parent'), list('bulletList', [paragraph('one')], [paragraph('two')])]))
     assert.equal(run(words, backspaceNestedItem()).applied, false)
+  })
+})
+
+/** A page holding the given body blocks, with its first line to `to` selected
+ *  — the way a drag down a list from its top row selects it. */
+function selecting(from: string, to: string, ...body: Node[]) {
+  const start = caretAfter(from, ...body)
+  const end = caretAfter(to, ...body)
+  return start.apply(start.tr.setSelection(TextSelection.create(start.doc, start.selection.from - from.length, end.selection.from)))
+}
+
+/** A list as an outline: each item's words, indented by its depth. */
+function outlineOf(node: Node, depth = 0): string[] {
+  return node.content.content.flatMap((item) => [
+    '  '.repeat(depth) + item.firstChild!.textContent,
+    ...(nestedList(item) ? outlineOf(nestedList(item)!, depth + 1) : []),
+  ])
+}
+
+describe('Tab over several items', () => {
+  it('takes the rest under the first, when the selection starts on it', () => {
+    for (const type of ['bulletList', 'orderedList']) {
+      const start = selecting('a', 'c', list(type, [paragraph('a')], [paragraph('b')], [paragraph('c')], [paragraph('d')]))
+      const { state, applied } = run(start, sinkFromFirstItem())
+      assert.equal(applied, true)
+      state.doc.check()
+      assert.deepEqual(outlineOf(state.doc.child(1)), ['a', '  b', '  c', 'd'])
+      assert.equal(state.doc.textBetween(state.selection.from, state.selection.to, '|'), 'a|b|c', 'still selected')
+    }
+  })
+
+  it('joins them to a list already under the first', () => {
+    const start = selecting('a', 'c', list('bulletList', [paragraph('a'), list('bulletList', [paragraph('a1')])], [paragraph('b')], [paragraph('c')]))
+    const { state, applied } = run(start, sinkFromFirstItem())
+    assert.equal(applied, true)
+    state.doc.check()
+    assert.deepEqual(outlineOf(state.doc.child(1)), ['a', '  a1', '  b', '  c'])
+  })
+
+  it('does the same from the first item of a nested list', () => {
+    const start = selecting('b1', 'b2', list('bulletList', [paragraph('a'), list('bulletList', [paragraph('b1')], [paragraph('b2')])]))
+    const { state, applied } = run(start, sinkFromFirstItem())
+    assert.equal(applied, true)
+    assert.deepEqual(outlineOf(state.doc.child(1)), ['a', '  b1', '    b2'])
+  })
+
+  it('leaves the rest to Tiptap', () => {
+    const items = () => list('bulletList', [paragraph('a')], [paragraph('b')], [paragraph('c')])
+    // Items further down, which Tiptap nests every one of.
+    assert.equal(run(selecting('b', 'c', items()), sinkFromFirstItem()).applied, false)
+    // The first item alone, with nothing else to take under it.
+    assert.equal(run(selecting('a', 'a', items()), sinkFromFirstItem()).applied, false)
+    assert.equal(run(caretAfter('a', items()), sinkFromFirstItem()).applied, false)
   })
 })
 
