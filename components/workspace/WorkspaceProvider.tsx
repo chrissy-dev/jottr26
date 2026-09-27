@@ -40,6 +40,14 @@ export function useSyncStatus() {
   return useContext(SyncStatusContext)
 }
 
+/** Supabase hands over a new session object each time the tab comes back into
+ *  view, the same session as before. Keeping the one already held stops every
+ *  reader of the workspace re-rendering on every switch back to the app. */
+function keepIfSame(current: Session | null, next: Session | null) {
+  const same = current?.access_token === next?.access_token && current?.user.id === next?.user.id
+  return same ? current : next
+}
+
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [ready, setReady] = useState(false)
@@ -66,12 +74,14 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     // that is a real sign-out, not an unreachable server.
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
-      setSession(data.session ?? storedSession())
+      const next = data.session ?? storedSession()
+      setSession((current) => keepIfSame(current, next))
       setReady(true)
     })
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next ?? storedSession())
+      const session = next ?? storedSession()
+      setSession((current) => keepIfSame(current, session))
       setReady(true)
     })
 
