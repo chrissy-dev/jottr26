@@ -103,7 +103,7 @@ function ThemeSwitch() {
 /** One setting: what it is on the left, its value or control on the right. */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <li className="flex min-h-14 items-center gap-4 py-3 pointer-coarse:min-h-16">
+    <li className="flex min-h-14 items-center gap-4 py-3 pointer-coarse:min-h-16 first:min-h-0 first:pt-0">
       <span className="shrink-0 text-ink">{label}</span>
       <span className="ml-auto flex min-w-0 items-center justify-end">{children}</span>
     </li>
