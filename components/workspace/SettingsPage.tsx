@@ -19,18 +19,44 @@ function buildStamp() {
   return `${at.getFullYear()}${pad(at.getMonth() + 1)}${pad(at.getDate())}${pad(at.getHours())}${pad(at.getMinutes())}`
 }
 
-/** The build this device is running, which the service worker swaps for a new
- *  deploy's on a later load. It takes the row the trail takes on a page, in the
- *  same size and colour as the trail's last crumb. */
+/** The row the trail takes on a page: on the left the build this device is
+ *  running, which the service worker swaps for a new deploy's on a later load,
+ *  in the same size and colour as the trail's last crumb; on the right the
+ *  button to sign out, where the trash keeps its Empty trash. */
 export function SettingsBar() {
-  return <span className="flex h-8 items-center text-faint pointer-coarse:h-10">Version {buildStamp()}</span>
+  const { signOut } = useWorkspace()
+  const status = useSyncStatus()
+  return (
+    <>
+      <span className="flex h-8 items-center text-faint pointer-coarse:h-10">Version {buildStamp()}</span>
+      <button
+        type="button"
+        onClick={() => {
+          // Signing out erases the local copy, so unsynced work has to be
+          // called out rather than quietly discarded.
+          if (
+            status.pending > 0 &&
+            !window.confirm(
+              `${status.pending} ${status.pending === 1 ? 'page has' : 'pages have'} changes that haven't reached your account yet. Signing out now will discard them. Continue?`,
+            )
+          ) {
+            return
+          }
+          void signOut()
+        }}
+        className="pointer-events-auto ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-sunken px-3 font-medium text-danger shadow-[var(--shadow-subtle)] transition-colors hover:bg-[var(--hover)] pointer-coarse:h-10"
+      >
+        <Icon name="logout" size={14} />
+        Sign out
+      </button>
+    </>
+  )
 }
 
 /** Laid out like a note, as the trash is: the same title, then the settings
  *  where the body would be. */
 export function SettingsPage() {
-  const { session, signOut } = useWorkspace()
-  const status = useSyncStatus()
+  const { session } = useWorkspace()
   const retrySync = useRetrySync()
 
   return (
@@ -41,26 +67,6 @@ export function SettingsPage() {
       <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)] text-ink">
         <Icon name="user" size={15} className="shrink-0 text-faint" />
         <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{session?.user.email}</span>
-        <button
-          type="button"
-          onClick={() => {
-            // Signing out erases the local copy, so unsynced work has to be
-            // called out rather than quietly discarded.
-            if (
-              status.pending > 0 &&
-              !window.confirm(
-                `${status.pending} ${status.pending === 1 ? 'page has' : 'pages have'} changes that haven't reached your account yet. Signing out now will discard them. Continue?`,
-              )
-            ) {
-              return
-            }
-            void signOut()
-          }}
-          className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] font-medium text-danger transition-colors hover:bg-[var(--hover)] pointer-coarse:py-2 pointer-coarse:text-[14px]"
-        >
-          <Icon name="logout" size={14} />
-          Sign out
-        </button>
       </div>
 
       <SectionLabel>Appearance</SectionLabel>
