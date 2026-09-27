@@ -1,8 +1,7 @@
 import { mergeAttributes, Node } from '@tiptap/core'
 import { wrapIn } from '@tiptap/pm/commands'
 import type { Command } from '@tiptap/pm/state'
-import type { ResolvedPos } from '@tiptap/pm/model'
-import { newLineAfter } from './accordion'
+import { leaveBox } from './accordion'
 import { pm } from './helpers'
 
 /** A callout: a padded box that sets a passage apart from the page around it.
@@ -32,23 +31,7 @@ import { pm } from './helpers'
  *  Enter still means 'next item', which is what the list's own binding does
  *  with it once this declines. */
 export function leaveCallout(name: string): Command {
-  return (state, dispatch) => {
-    const $from = insideCallout(state.selection.$from, name)
-    if (!$from || !state.selection.empty) return false
-    if ($from.parent.content.size > 0 || $from.after() !== $from.end(-1)) return false
-
-    const tr = state.tr
-    if ($from.node(-1).childCount > 1) tr.delete($from.before(), $from.after())
-    if (!newLineAfter(tr, tr.mapping.map($from.after(-1)))) return false
-    if (dispatch) dispatch(tr.scrollIntoView())
-    return true
-  }
-}
-
-/** The position, if it sits in a paragraph the named node holds directly. */
-function insideCallout($from: ResolvedPos, name: string) {
-  if ($from.depth < 2 || $from.parent.type.name !== 'paragraph') return null
-  return $from.node(-1).type.name === name ? $from : null
+  return leaveBox(name, 1)
 }
 
 declare module '@tiptap/core' {

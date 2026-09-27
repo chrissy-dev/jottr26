@@ -12,6 +12,7 @@ import type { EditorView, NodeView, ViewMutationRecord } from '@tiptap/pm/view'
 import {
   backspaceHeading,
   isBlankBody,
+  isEmptyParagraph,
   openLineAt,
   pm,
   removeBlockToAbove,
@@ -179,16 +180,22 @@ export function enterAccordionBody(): Command {
  *  blank last line is the way out, as it is at the end of a list. The line is
  *  taken with you unless it is the box's only one, which has to stay. */
 export function leaveAccordion(): Command {
+  return leaveBox(ACCORDION_BODY, 2)
+}
+
+/** Enter, on an empty last line held directly by a `body` node: out of the
+ *  box `boxDepth` levels up — the body itself, or the node around it — onto a
+ *  new line below it. The line goes too, unless it is the body's only one. */
+export function leaveBox(body: string, boxDepth: number): Command {
   return (state, dispatch) => {
     const { $from, empty } = state.selection
-    if (!empty || $from.depth < 3 || $from.parent.type.name !== 'paragraph') return false
-    if ($from.parent.content.size > 0) return false
-    const body = $from.node(-1)
-    if (body.type.name !== ACCORDION_BODY || $from.index(-1) !== body.childCount - 1) return false
+    if (!empty || $from.depth <= boxDepth || !isEmptyParagraph($from.parent)) return false
+    const holder = $from.node(-1)
+    if (holder.type.name !== body || $from.index(-1) !== holder.childCount - 1) return false
 
     const tr = state.tr
-    if (body.childCount > 1) tr.delete($from.before(), $from.after())
-    if (!newLineAfter(tr, tr.mapping.map($from.after(-2)))) return false
+    if (holder.childCount > 1) tr.delete($from.before(), $from.after())
+    if (!newLineAfter(tr, tr.mapping.map($from.after(-boxDepth)))) return false
     if (dispatch) dispatch(tr.scrollIntoView())
     return true
   }
