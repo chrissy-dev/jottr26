@@ -184,7 +184,7 @@ export function Workspace() {
               {page && (
                 <div
                   className={`float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 ${
-                    wide && sidebarOpen ? '' : 'pl-10 pointer-coarse:pl-12'
+                    wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
                   }`}
                 >
                   {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} truncate={wide} />}
