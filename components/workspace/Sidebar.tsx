@@ -31,8 +31,8 @@ export function Sidebar({
   const expanded = useExpanded()
   const expandedFavourites = useExpandedFavourites()
 
-  // Typing changes only rows' search text and edit time, which the sidebar
-  // doesn't draw; kept rows mean the tree isn't rebuilt or redrawn for it.
+  // Sync rewrites rows' bookkeeping, which the sidebar doesn't draw; kept rows
+  // mean the tree isn't rebuilt or redrawn for it.
   const rows = useDrawnRows(pages)
   const tree: TreeNode[] = useMemo(() => buildTree(rows), [rows])
   // Each favourite with its subpages, taken from the tree so they read the

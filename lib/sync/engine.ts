@@ -1113,10 +1113,13 @@ export class SyncEngine {
           const current = await this.db.pages.get(page.id)
           // Edited again while the request was in flight: leave it dirty.
           if (!current || current.updatedAt !== page.updatedAt) continue
+          const stamp = stamps.get(page.id)
+          // Both times take the server's, as a pull of the row would, so the
+          // overlap window's next pull finds nothing to write back.
           await this.db.pages.update(page.id, {
             dirty: 0,
             dirtyFields: [],
-            serverUpdatedAt: stamps.get(page.id) ?? current.serverUpdatedAt,
+            ...(stamp ? { updatedAt: stamp, serverUpdatedAt: stamp } : {}),
           })
         }
       })

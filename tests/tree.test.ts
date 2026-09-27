@@ -37,16 +37,22 @@ describe('sidebar tree', () => {
     assert.equal(reuseRows(before, typed), before)
   })
 
-  it('takes a changed row, and a changed flag list, while keeping the rows around it', () => {
-    const before = [row('a'), { ...row('b'), dirtyFields: ['title' as const] }]
-    const renamed = [{ ...before[0], title: 'A' }, { ...before[1], dirtyFields: ['title' as const] }]
+  it('keeps last time\'s list when only sync\'s bookkeeping moved on', () => {
+    const before = [row('a'), { ...row('b'), dirty: 1, dirtyFields: ['title' as const] }]
+    const pushed = [
+      { ...before[0], updatedAt: 7, serverUpdatedAt: 7 },
+      { ...before[1], dirty: 0, dirtyFields: [], updatedAt: 8, serverUpdatedAt: 8 },
+    ]
+    assert.equal(reuseRows(before, pushed), before)
+  })
+
+  it('takes a changed row while keeping the rows around it', () => {
+    const before = [row('a'), row('b')]
+    const renamed = [{ ...before[0], title: 'A' }, { ...before[1] }]
     const after = reuseRows(before, renamed)
     assert.notEqual(after, before)
     assert.equal(after[0], renamed[0])
-    assert.equal(after[1], before[1], 'an equal flag list is not a change')
-
-    const flagged = reuseRows(before, [before[0], { ...before[1], dirtyFields: ['parentId' as const] }])
-    assert.notEqual(flagged[1], before[1])
+    assert.equal(after[1], before[1])
   })
 
   it('follows pages being added, removed and reordered', () => {

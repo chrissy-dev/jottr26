@@ -72,9 +72,20 @@ export function useDocReady(pageId: string): boolean | undefined {
   }, [pageId])
 }
 
-/** Drawn nowhere in the sidebar. Both were written on every pause in typing
- *  by older builds, and can still arrive on rows they wrote. */
-const UNDRAWN = new Set<string>(['searchText', 'editedAt'])
+/** Drawn nowhere in the sidebar. Search text and edit time were written on
+ *  every pause in typing by older builds, and can still arrive on rows they
+ *  wrote. The rest is sync's bookkeeping, which moves on every push and on the
+ *  pull after it without anything the sidebar shows changing. */
+const UNDRAWN = new Set<string>([
+  'searchText',
+  'editedAt',
+  'updatedAt',
+  'serverUpdatedAt',
+  'dirty',
+  'dirtyFields',
+  'createdAt',
+  'origin',
+])
 
 function sameForSidebar(a: PageRow, b: PageRow) {
   const left = a as unknown as Record<string, unknown>
@@ -92,13 +103,14 @@ function sameForSidebar(a: PageRow, b: PageRow) {
   return true
 }
 
-/** The page list with last time's rows kept wherever only the search text or
- *  edit time moved on, and last time's list itself when that is all that did.
+/** The page list with last time's rows kept wherever only undrawn fields
+ *  moved on, and last time's list itself when that is all that did.
  *
- *  Typing rewrites the open page's row every few hundred milliseconds, and the
- *  live query hands back every row new each time. Passed straight on, the
- *  whole sidebar tree would be rebuilt and redrawn with every pause. The rows
- *  kept here carry stale search text, so they are for drawing only. */
+ *  Every push, and the pull that follows it, rewrites a row's sync
+ *  bookkeeping, and the live query hands back every row new each time. Passed
+ *  straight on, the whole sidebar tree would be rebuilt and redrawn for each.
+ *  The rows kept here can carry stale undrawn fields, so they are for drawing
+ *  only; anything that acts on a page reads it again by id. */
 export function reuseRows(previous: readonly PageRow[], next: PageRow[]): PageRow[] {
   const before = new Map(previous.map((page) => [page.id, page]))
   let changed = previous.length !== next.length

@@ -287,6 +287,34 @@ describe('local-first sync', () => {
     assert.equal(writes, 0)
   })
 
+  it('does not write a pushed row back on the pull after it', async () => {
+    await laptop.focus()
+    const id = await createPage()
+    await laptop.setTitle(id, 'Starred')
+    await laptop.sync()
+    await laptop.sync()
+
+    // A change to the row alone: no document goes with it to stamp it again.
+    await toggleFavorite(id)
+    await laptop.sync()
+
+    const db = activeDatabase()!
+    let writes = 0
+    const count = () => {
+      writes += 1
+    }
+    db.pages.hook('updating', count)
+    db.pages.hook('creating', count)
+    try {
+      await laptop.engine.syncOnce()
+    } finally {
+      db.pages.hook('updating').unsubscribe(count)
+      db.pages.hook('creating').unsubscribe(count)
+    }
+    assert.equal(writes, 0)
+    assert.equal((await laptop.page(id))?.isFavorite, 1)
+  })
+
   it('reports a typed-but-unsynced page as pending rather than synced', async () => {
     await laptop.focus()
     const id = await createPage()
