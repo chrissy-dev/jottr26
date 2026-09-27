@@ -10,13 +10,22 @@ export async function api<T>(
   path: string,
   { body, signal }: { body?: unknown; signal?: AbortSignal } = {},
 ): Promise<T> {
-  const response = await fetch(`${API}${path}`, {
-    method,
-    headers: body === undefined ? undefined : { 'content-type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    credentials: 'same-origin',
-    signal,
-  })
+  let response: Response
+  try {
+    response = await fetch(`${API}${path}`, {
+      method,
+      headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      credentials: 'same-origin',
+      signal,
+    })
+  } catch (error) {
+    // Each browser words a failed connection its own way ("NetworkError when
+    // attempting to fetch resource", "Failed to fetch", "Load failed"), and
+    // none of them says what happened. A cancelled request stays as it is.
+    if (signal?.aborted) throw error
+    throw new Error("Can't reach the Jottr server. Check it's running, and that this device can reach it.")
+  }
   const data = (await response.json().catch(() => null)) as (T & { error?: string }) | null
   if (!response.ok) {
     throw Object.assign(new Error(data?.error ?? `The server answered ${response.status}`), {
