@@ -37,6 +37,9 @@ const Editor = dynamic(() => loadEditor().then((m) => m.Editor), {
   ),
 })
 
+// The gap between the wide sidebar and the window's edges, on every side.
+const SIDEBAR_INSET = 5
+
 export function Workspace() {
   const { userId } = useWorkspace()
   const pages = useAllPages(userId)
@@ -115,35 +118,45 @@ export function Workspace() {
                 // drawer snapping open with no animation at all.
                 `fixed inset-y-0 left-0 z-40 w-[min(300px,86vw)] transition-[translate,box-shadow] duration-200 ${sidebarOpen ? 'translate-x-0 shadow-[var(--shadow-pop)]' : '-translate-x-full shadow-none'}`
           } overflow-hidden`}
-          style={wide ? { width: sidebarOpen ? width : 0 } : undefined}
+          style={wide ? { width: sidebarOpen ? width + SIDEBAR_INSET * 2 : 0 } : undefined}
           aria-label="Pages"
           aria-hidden={!sidebarOpen}
           inert={!sidebarOpen}
         >
-          <div className={wide ? 'h-full' : 'h-full w-full'} style={wide ? { width } : undefined}>
-            <Sidebar
-              pages={pages}
-              openId={openId}
-              onOpen={openPage}
-              view={view}
-              onOpenView={showView}
-            />
+          {/* On a wide screen the sidebar floats a few pixels in from the
+              window's edges, rounded like the app's other panels. The inset is
+              added around the kept width rather than taken out of it. */}
+          <div
+            className={wide ? 'h-full' : 'h-full w-full'}
+            style={wide ? { width: width + SIDEBAR_INSET * 2, padding: SIDEBAR_INSET } : undefined}
+          >
+            <div className={wide ? 'h-full overflow-hidden rounded-xl' : 'h-full'}>
+              <Sidebar
+                pages={pages}
+                openId={openId}
+                onOpen={openPage}
+                view={view}
+                onOpenView={showView}
+              />
+            </div>
           </div>
         </aside>
 
         {/* Outside the sidebar on purpose. Inside it, the six pixels of grab area
             would sit on top of the page list's own scrollbar, which is nine
             pixels wide, and anyone whose scrollbars are always visible could not
-            reach the thumb. Out here it hangs over the page's left margin. */}
+            reach the thumb. Out here it fills the gap beside the sidebar and
+            hangs a little over the page's left margin, its line drawn down the
+            middle of the gap. */}
         {wide && sidebarOpen && (
           <div className="relative z-40 w-0 shrink-0">
             <div
-              className="group absolute inset-y-0 left-0 w-1.5 cursor-col-resize touch-none"
+              className="group absolute inset-y-0 -left-[5px] w-2 cursor-col-resize touch-none"
               onPointerDown={startResize}
               onLostPointerCapture={() => endResize()}
             >
               <div
-                className={`absolute inset-y-0 -left-px w-0.5 bg-accent transition-opacity ${
+                className={`absolute inset-y-[5px] left-[1.5px] w-0.5 bg-accent transition-opacity ${
                   dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 }`}
               />
