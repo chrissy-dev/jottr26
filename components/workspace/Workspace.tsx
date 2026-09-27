@@ -202,12 +202,10 @@ export function Workspace() {
               {/* Keyed on the page so the slide replays on every navigation. The
                   editor underneath already remounts per page, so this costs
                   nothing more than it did. The trash and the settings take the same
-                  column. It is a pixel taller than the box it scrolls in, however
-                  short the page: iOS and Safari only rubber-band a scroller whose
-                  content overflows. */}
+                  column. */}
               <div
                 key={page?.id ?? view}
-                className={`page-enter mx-auto min-h-[calc(100%+1px)] w-full max-w-[780px] px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
+                className={`page-enter mx-auto w-full max-w-[780px] px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
                   wide
                     ? 'pt-28'
                     : 'pt-[calc(max(0.5rem,env(safe-area-inset-top))+4.5rem)] pointer-coarse:pt-[calc(max(0.5rem,env(safe-area-inset-top))+5rem)]'
