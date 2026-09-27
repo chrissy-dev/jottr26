@@ -61,8 +61,9 @@ export function TrashPage({ pages }: { pages: PageRow[] }) {
               <button
                 type="button"
                 onClick={() => void restorePage(page.id)}
-                className="px-1 font-medium text-accent hover:underline pointer-coarse:py-2"
+                className="flex h-[calc(var(--body-size)*1.6)] items-center gap-1 self-start px-1 font-medium text-accent hover:underline"
               >
+                <Icon name="undo" size={15} strokeWidth={1.8} />
                 Restore
               </button>
             </li>
