@@ -6,7 +6,10 @@ import { createTable } from '@tiptap/extension-table'
 import { EditorState, TextSelection } from '@tiptap/pm/state'
 import type { DecorationSet } from '@tiptap/pm/view'
 import type { Node } from '@tiptap/pm/model'
-import { prosemirrorToYXmlFragment, ySyncPluginKey } from 'y-prosemirror'
+import { prosemirrorToYXmlFragment } from 'y-prosemirror'
+// The key the Collaboration extension runs under. y-prosemirror has its own,
+// under the same name, which a live editor never sets.
+import { ySyncPluginKey } from '@tiptap/y-tiptap'
 import {
   FinanceTable,
   columnTotals,

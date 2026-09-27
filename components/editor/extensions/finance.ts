@@ -21,7 +21,7 @@ import {
 import type { Mark, Node, ResolvedPos } from '@tiptap/pm/model'
 import { GapCursor } from '@tiptap/pm/gapcursor'
 import { Table } from '@tiptap/extension-table'
-import { ySyncPluginKey } from 'y-prosemirror'
+import { isChangeOrigin } from '@tiptap/extension-collaboration'
 import { isCellNode, pm, removeBlockToAbove, replaceWithEmptyLine, replacingSelection } from './helpers'
 import { columnTrade } from './tableResize'
 
@@ -241,7 +241,7 @@ export function financePlugin() {
      *  still typing in. Your caret never left, so this never fires. */
     appendTransaction(transactions, oldState, newState) {
       // A remote change is another device's business; it formats its own cells.
-      if (transactions.some((tr) => tr.getMeta(ySyncPluginKey)?.isChangeOrigin)) return null
+      if (transactions.some(isChangeOrigin)) return null
 
       const before = currentCell(oldState)
       if (!before) return null
