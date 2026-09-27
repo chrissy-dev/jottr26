@@ -10,6 +10,7 @@ import { deleteLine } from './extensions/deleteLine'
 import { SlashList } from './SlashMenu'
 import { useSlashMenu } from './useSlashMenu'
 import { TableControls, useTableState } from './TableMenu'
+import { useScrollFade } from './useScrollFade'
 
 /** The format menu for touch screens: the same actions as the bubble, on a bar
  *  that sits on top of the keyboard for as long as the page is being edited.
@@ -36,6 +37,8 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
   const link = useLinkEditing(editor)
   const barRef = useRef<HTMLDivElement>(null)
   const table = useTableState(editor)
+  const tableRow = useScrollFade()
+  const formatRow = useScrollFade()
 
   const state = useEditorState({
     editor,
@@ -212,9 +215,10 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
               the system callout and the caret all compete with. */}
           {table && (
             <div
+              ref={tableRow}
               role="group"
               aria-label="Table"
-              className="flex items-center gap-0.5 overflow-x-auto border-b border-line px-1.5 py-1 [scrollbar-width:none]"
+              className="scroll-fade flex items-center gap-0.5 overflow-x-auto border-b border-line px-1.5 py-1 [scrollbar-width:none]"
             >
               <TableControls editor={editor} state={table} />
             </div>
@@ -222,8 +226,13 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
           {/* One row that scrolls as a whole, so on a narrow screen as many
               buttons show as fit, whichever they are. Its right-hand margin
               is an item rather than padding, which Safari leaves off the end
-              of a row that scrolls. */}
-          <div className="flex items-center gap-0.5 overflow-x-auto py-1 pl-1.5 [scrollbar-width:none] after:w-1 after:shrink-0 after:content-['']">
+              of a row that scrolls. The ends fade out while there is more
+              past them, so a button half off the edge reads as the row
+              carrying on rather than being cut short. */}
+          <div
+            ref={formatRow}
+            className="scroll-fade flex items-center gap-0.5 overflow-x-auto py-1 pl-1.5 [scrollbar-width:none] after:w-1 after:shrink-0 after:content-['']"
+          >
             <ToolButton icon="slash" label="Insert block" onClick={openBlocks} />
             <span className={SEPARATOR} />
             <FormatButtons
