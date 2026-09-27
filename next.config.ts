@@ -16,6 +16,9 @@ function buildCommit() {
 }
 
 const nextConfig: NextConfig = {
+  // JOTTR_STATIC_EXPORT=1 builds plain files into out/, for any web server to
+  // host. The app has no server code, so the export is the whole app.
+  ...(process.env.JOTTR_STATIC_EXPORT === "1" && { output: "export" }),
   env: {
     BUILD_COMMIT: buildCommit(),
     BUILD_TIME: new Date().toISOString(),
