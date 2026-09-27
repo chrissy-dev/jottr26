@@ -104,7 +104,7 @@ const Row = memo(function Row({
   )
 
   return (
-    <li className="py-px">
+    <li className="py-[1.5px]">
       <div
         draggable
         onDragStart={(event) => {
