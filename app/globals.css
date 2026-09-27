@@ -353,6 +353,11 @@ h1.page-title {
   padding: 20px 22px;
   margin: 8px 0;
 }
+/* The page's boxed blocks are lifted off it by the same small shadow as the
+   sidebar. The rules below that ring or edge a box keep it alongside theirs. */
+.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box, pre, table) {
+  box-shadow: var(--shadow-subtle);
+}
 .ProseMirror div[data-type="callout"] > :first-child {
   margin-top: 0;
 }
@@ -517,7 +522,7 @@ h1.page-title {
    instead, ready to be deleted or cut. Only while the editor has focus, like
    the selection tint below. */
 .ProseMirror-focused .ProseMirror-selectednode > div[data-type="subpages"] > .subpages-box {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 .ProseMirror div[data-type="subpages"] .subpages-empty {
   margin: 0;
@@ -667,7 +672,7 @@ h1.page-title {
    it costs no layout. */
 .ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"])
   :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box) {
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow-subtle);
 }
 
 .ProseMirror code {
@@ -899,13 +904,13 @@ h1.page-title {
    is ringed instead, like a subpage list. Outranks the rule that rings a box
    inside another. */
 .ProseMirror.ProseMirror-focused :is(div[data-type="callout"].ProseMirror-selectednode, .ProseMirror-selectednode > .accordion-content > div[data-type="accordionBody"]) {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 /* A code block too, keeping its own shade and corners rather than the tint. */
 .ProseMirror.ProseMirror-focused pre.ProseMirror-selectednode {
   background: var(--surface-sunken);
   border-radius: 8px;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 /* And a table with every cell selected, which is a table selected whole. The
    ring is drawn just inside its edge, as its wrapper scrolls and would clip
