@@ -27,7 +27,7 @@ export function SettingsBar() {
   const status = useSyncStatus()
   return (
     <>
-      <span className="flex h-8 items-center text-faint pointer-coarse:h-10">V.{buildStamp()}</span>
+      <span className="flex h-8 items-center text-faint pointer-coarse:h-10">v{buildStamp()}</span>
       <button
         type="button"
         onClick={() => {
