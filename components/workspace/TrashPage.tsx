@@ -27,8 +27,9 @@ export function TrashBar({ pages }: { pages: PageRow[] }) {
             void emptyTrash()
           }
         }}
-        className="pointer-events-auto ml-auto h-8 shrink-0 rounded-md bg-sunken px-3 font-medium text-danger shadow-[var(--shadow-subtle)] transition-colors hover:bg-[var(--hover)] pointer-coarse:h-10"
+        className="pointer-events-auto ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-sunken px-3 font-medium text-danger shadow-[var(--shadow-subtle)] transition-colors hover:bg-[var(--hover)] pointer-coarse:h-10"
       >
+        <Icon name="trash" size={16} strokeWidth={1.8} />
         Empty trash
       </button>
     </>
