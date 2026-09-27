@@ -75,13 +75,15 @@ describe('callout block', () => {
     assert.equal((state.doc.child(1) as Node).childCount, 1, 'the blank line is not left behind')
   })
 
-  it('drops a callout that was never written in', () => {
-    // Enter on the empty line of an empty box is the way out of one opened by
-    // accident: the box goes with the line.
+  it('keeps a callout that was never written in, empty, to come back to', () => {
+    // As an accordion's box does: its only line stays, and the caret goes to
+    // a new line below.
     const start = page(callout.create(null, paragraph()))
     const { state, applied } = run(start, enter)
     assert.equal(applied, true)
-    assert.deepEqual(outline(state), ['title', 'paragraph'])
+    assert.deepEqual(outline(state), ['title', 'callout', 'paragraph'])
+    assert.equal((state.doc.child(1) as Node).childCount, 1)
+    assert.equal(state.selection.$from.parent, state.doc.lastChild)
   })
 
   it('leaves Enter alone inside a list in a callout, where it means next item', () => {

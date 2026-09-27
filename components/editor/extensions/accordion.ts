@@ -123,7 +123,7 @@ export function unwrapAccordion(): Command {
  *  item's first line: a new first item of the ones nested under it, or the
  *  next item of the list when there are none. Anywhere else it is a new line
  *  below. False where no line can go. */
-function newLineAfter(tr: Transaction, after: number) {
+export function newLineAfter(tr: Transaction, after: number) {
   const $after = tr.doc.resolve(after)
   const parent = $after.parent
   const paragraph = tr.doc.type.schema.nodes.paragraph

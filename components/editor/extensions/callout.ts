@@ -1,7 +1,8 @@
 import { mergeAttributes, Node } from '@tiptap/core'
-import { liftEmptyBlock, wrapIn } from '@tiptap/pm/commands'
+import { wrapIn } from '@tiptap/pm/commands'
 import type { Command } from '@tiptap/pm/state'
 import type { ResolvedPos } from '@tiptap/pm/model'
+import { newLineAfter } from './accordion'
 import { pm } from './helpers'
 
 /** A callout: a padded box that sets a passage apart from the page around it.
@@ -23,9 +24,9 @@ import { pm } from './helpers'
  *  blank line gets you out. That needs no Shift, which a phone keyboard does
  *  not have, and it still gets you underneath a callout at the foot of a page.
  *
- *  The blank line goes with you rather than staying behind as an empty row. A
- *  box whose only line this was goes too, which is the way out of one opened
- *  by accident.
+ *  The blank line goes with you rather than staying behind as an empty row,
+ *  unless it is the box's only one: then it stays, and so does the box, empty
+ *  to come back to, as an accordion's does.
  *
  *  Only for a paragraph the callout holds directly. Inside a list in a callout
  *  Enter still means 'next item', which is what the list's own binding does
@@ -35,7 +36,12 @@ export function leaveCallout(name: string): Command {
     const $from = insideCallout(state.selection.$from, name)
     if (!$from || !state.selection.empty) return false
     if ($from.parent.content.size > 0 || $from.after() !== $from.end(-1)) return false
-    return liftEmptyBlock(state, dispatch)
+
+    const tr = state.tr
+    if ($from.node(-1).childCount > 1) tr.delete($from.before(), $from.after())
+    if (!newLineAfter(tr, tr.mapping.map($from.after(-1)))) return false
+    if (dispatch) dispatch(tr.scrollIntoView())
+    return true
   }
 }
 
@@ -49,8 +55,7 @@ declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     callout: {
       /** Wrap the selection in a callout, even one already in a callout: boxes
-       *  nest, as accordions do. The way out of one is Enter on its empty last
-       *  line. */
+       *  nest, as accordions do. */
       setCallout: () => ReturnType
     }
   }
