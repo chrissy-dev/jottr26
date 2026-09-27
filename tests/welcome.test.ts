@@ -43,7 +43,10 @@ describe('the welcome page', () => {
     const basics = body.find((node) => node.textContent === 'The Basics')!
     // The block is the title's weight; bold on top would be a second one.
     assert.deepEqual(basics.firstChild!.marks, [])
-    assert.equal(body[body.indexOf(basics) - 2].type.name, 'horizontalRule')
+    // The opening callout runs straight into the first section, no divider.
+    assert.equal(body[body.indexOf(basics) - 2].type.name, 'callout')
+    const formatting = body.find((node) => node.textContent === 'Formatting')!
+    assert.equal(body[body.indexOf(formatting) - 2].type.name, 'horizontalRule')
 
     const list = body.find((node) => node.type.name === 'orderedList')!
     assert.equal(list.childCount, 3)

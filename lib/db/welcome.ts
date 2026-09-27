@@ -20,7 +20,7 @@ const WELCOME_BODY: Block[] = [
       "If you're used to text editors and other notes apps, Jottr is probably pretty self explanatory and you won't get much out of this document. But if you're looking for specific details, read on...",
     ],
   },
-  ...BREAK,
+  null,
   { title: 'The Basics' },
   'Create pages in the sidebar, pages can be nested as deeply as you like and can be dragged and dropped to arrange. Click the star in the top-right corner of a page to favourite it - favourites appear in their own section in the sidebar.',
   ...BREAK,
