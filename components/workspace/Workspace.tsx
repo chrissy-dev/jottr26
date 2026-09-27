@@ -149,7 +149,7 @@ export function Workspace() {
               opposite corner — same top, same height, same distance in from the
               edge — and stop short of it. The row itself lets clicks through to
               the page; only what is drawn in it takes them. */}
-          <div className="float-top pointer-events-none absolute left-2 right-12 z-30 flex min-w-0 items-center gap-2 pointer-coarse:right-[3.25rem]">
+          <div className="float-top pointer-events-none absolute left-2 right-12 z-30 flex min-w-0 items-center gap-2 pointer-coarse:right-14">
             {/* It keeps the old top bar's backdrop: on a phone the page's left
                 edge passes underneath. There it is always on screen, so it gets
                 an outline rather than being a bare icon that looks like part of
@@ -159,9 +159,9 @@ export function Workspace() {
                 type="button"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Show sidebar"
-                className="float-backdrop pointer-events-auto grid size-8 shrink-0 place-items-center text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:size-9 pointer-coarse:text-muted"
+                className="float-backdrop pointer-events-auto grid size-8 shrink-0 place-items-center text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:size-10 pointer-coarse:text-muted"
               >
-                <Icon name="panel" size={18} />
+                <Icon name="panel" size={18} className="pointer-coarse:size-5" />
               </button>
             )}
             {wide && page && trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} floating />}
@@ -186,7 +186,7 @@ export function Workspace() {
                   it, but scroll away with the text rather than floating over
                   it, so they need no backdrop. */}
               {!wide && page && (
-                <div className="float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 pl-10 pointer-coarse:pl-11">
+                <div className="float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 pl-10 pointer-coarse:pl-12">
                   {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} />}
                   <StarButton page={page} className="ml-auto rounded-md" />
                 </div>
@@ -208,7 +208,7 @@ export function Workspace() {
                 className={`page-enter mx-auto w-full max-w-[780px] px-5 pb-[calc(4rem+var(--toolbar-inset,0px))] sm:px-10 ${enteringFromAbove ? '[--enter-side:-1] ' : ''}${
                   wide
                     ? 'pt-28'
-                    : 'pt-[calc(max(0.5rem,env(safe-area-inset-top))+4.5rem)] pointer-coarse:pt-[calc(max(0.5rem,env(safe-area-inset-top))+4.75rem)]'
+                    : 'pt-[calc(max(0.5rem,env(safe-area-inset-top))+4.5rem)] pointer-coarse:pt-[calc(max(0.5rem,env(safe-area-inset-top))+5rem)]'
                 }`}
               >
                 {page ? (
