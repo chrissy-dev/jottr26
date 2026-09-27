@@ -63,7 +63,7 @@ export function SettingsPage() {
     <>
       <h1 className="page-title">Settings</h1>
 
-      <ul className="divide-y divide-line border-y border-line text-[length:var(--body-size)]">
+      <ul className="divide-y divide-line text-[length:var(--body-size)]">
         <Row label="Account">
           <span className="min-w-0 truncate text-muted">{session?.user.email}</span>
         </Row>
@@ -103,7 +103,7 @@ function ThemeSwitch() {
 /** One setting: what it is on the left, its value or control on the right. */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <li className="flex min-h-12 items-center gap-4 py-2 pointer-coarse:min-h-14">
+    <li className="flex min-h-14 items-center gap-4 py-3 pointer-coarse:min-h-16">
       <span className="shrink-0 text-ink">{label}</span>
       <span className="ml-auto flex min-w-0 items-center justify-end">{children}</span>
     </li>
