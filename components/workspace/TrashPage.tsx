@@ -32,9 +32,7 @@ export function TrashPage() {
         )}
       </div>
 
-      {pages.length === 0 ? (
-        <p className="text-[length:var(--body-size)] text-faint">Empty.</p>
-      ) : (
+      {pages.length > 0 && (
         <ul>
           {pages.map((page) => (
             <li key={page.id} className="flex items-center gap-2 py-2">

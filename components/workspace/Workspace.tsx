@@ -18,7 +18,7 @@ import { useWorkspace } from './WorkspaceProvider'
 import { usePageTrail, useEntryFromAbove } from './pageTrail'
 import { useSidebarDrawer } from './useSidebarDrawer'
 import { useSidebarResize } from './useSidebarResize'
-import { useAllPages } from '@/lib/db/hooks'
+import { useAllPages, useTrashedPages } from '@/lib/db/hooks'
 import { useOpenPageId, useView, type View } from '@/lib/util/route'
 
 // The editor is the heaviest thing in the app and nobody needs it until a page
@@ -33,6 +33,7 @@ export function Workspace() {
   const pages = useAllPages(userId)
   const [openId, open] = useOpenPageId()
   const [view, openView] = useView()
+  const trashed = useTrashedPages(userId)
   const { wide, sidebarOpen, setSidebarOpen, afterDrawerShuts } = useSidebarDrawer()
   const { width, dragging, startResize, endResize } = useSidebarResize()
 
@@ -48,6 +49,9 @@ export function Workspace() {
 
   const byId = useMemo(() => new Map((pages ?? []).map((page) => [page.id, page])), [pages])
   const page = openId ? (byId.get(openId) ?? null) : null
+  // An empty trash gets the empty state rather than a title over nothing. It
+  // waits for the query, so a full trash never flashes as an empty one.
+  const trashEmpty = !page && view === 'trash' && trashed?.length === 0
 
   const trail = usePageTrail(byId, page)
   const enteringFromAbove = useEntryFromAbove(byId, openId)
@@ -175,7 +179,7 @@ export function Workspace() {
 
           {page && <LastUpdated at={Math.max(page.updatedAt, page.editedAt ?? 0)} />}
 
-          {page || view ? (
+          {(page || view) && !trashEmpty ? (
             <div className="scroll-thin relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
               {/* On a narrow screen the trail and the star are part of the page:
                   they start level with the sidebar button, the trail just past
@@ -218,6 +222,8 @@ export function Workspace() {
                 )}
               </div>
             </div>
+          ) : trashEmpty ? (
+            <EmptyState icon="trash" label="Trash is empty" />
           ) : (
             <EmptyState />
           )}
