@@ -67,11 +67,11 @@ export function SettingsPage() {
         <Row label="Account">
           <span className="min-w-0 truncate text-muted">{session?.user.email}</span>
         </Row>
-        <Row label="Theme">
-          <ThemeSwitch />
-        </Row>
         <Row label="Sync Status">
           <SyncStatus onRetry={() => void retrySync.startSync()} />
+        </Row>
+        <Row label="Theme">
+          <ThemeSwitch />
         </Row>
       </ul>
       {retrySync.overlay}
