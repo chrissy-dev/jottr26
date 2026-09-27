@@ -46,7 +46,7 @@ export function TrashPage({ pages }: { pages: PageRow[] }) {
       {pages.length > 0 && (
         <ul>
           {pages.map((page) => (
-            <li key={page.id} className="flex items-center gap-2 py-2">
+            <li key={page.id} className="-mx-2 flex items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-[var(--hover)]">
               <span className="flex h-[1lh] w-4 shrink-0 items-center justify-center self-start text-[length:var(--body-size)]">
                 <Icon name="file" size={15} className="text-faint" />
               </span>
