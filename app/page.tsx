@@ -19,16 +19,14 @@ export default function LandingPage() {
       <SignedInRedirect />
       <main className="w-full max-w-[34rem]">
         <h1 className="text-[1.75rem] font-semibold tracking-[-0.02em] text-ink">Jottr</h1>
-        {/* Pre-encoded at 2x and 3x the column width and served as-is: running it through
+        {/* Pre-encoded at 3x the column width and served as-is: running it through
             next/image re-encodes and rescales it, which visibly softens the UI text. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/screenshot-1632.webp"
-          srcSet="/screenshot-1088.webp 1088w, /screenshot-1632.webp 1632w"
-          sizes="(min-width: 34rem) 34rem, 100vw"
-          alt="Jottr open on a desktop, showing the page sidebar and a note with subpages, a checklist and a callout"
+          src="/screenshot.webp"
+          alt="Jottr open on a desktop, showing the page sidebar and the Welcome to Jottr note"
           width={1632}
-          height={1060}
+          height={1062}
           className="mt-4 h-auto w-full rounded-xl"
         />
         <p className="mt-6 text-[15px] leading-relaxed text-muted">
