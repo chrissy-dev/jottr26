@@ -348,8 +348,9 @@ h1.page-title {
   margin: 8px 0;
 }
 /* The page's boxed blocks are lifted off it by the same small shadow as the
-   sidebar. The rules below that ring or edge a box keep it alongside theirs. */
-.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box, pre, table) {
+   sidebar. The rules below that ring or edge a box keep it alongside theirs.
+   Not a table, whose border already draws its edge. */
+.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box, pre) {
   box-shadow: var(--shadow-subtle);
 }
 .ProseMirror div[data-type="callout"] > :first-child {
