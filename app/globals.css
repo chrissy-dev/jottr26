@@ -732,12 +732,13 @@ h1.page-title {
 
 /* Separate borders rather than collapsed, so the grid can be rounded off like
    a callout: a collapsed table hands its outer edge to the cells, whose square
-   corners would sit over any radius set here. The perimeter is left to the
-   boxed blocks' shadow, and each cell keeps only the two inner lines it shares
-   with the neighbours below and to its right. */
+   corners would sit over any radius set here. The perimeter is drawn once by
+   the table, and each cell keeps only the two inner lines it shares with the
+   neighbours below and to its right. */
 .ProseMirror table {
   border-collapse: separate;
   border-spacing: 0;
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
   /* Fixed layout keeps a long word in one cell from starving the others. */
   table-layout: fixed;
@@ -755,7 +756,7 @@ h1.page-title {
   position: relative;
 }
 
-/* The last of each would draw an outer edge the table no longer has. */
+/* The last of each doubles up with the table's own border otherwise. */
 .ProseMirror :is(td, th):last-child {
   border-right: none;
 }
@@ -764,18 +765,19 @@ h1.page-title {
 }
 
 /* A cell's background is squared off, so the corner ones are rounded to the
-   curve they sit in: the header strip at the top, the totals row at the foot. */
+   curve they sit in: the header strip at the top, the totals row at the foot.
+   One pixel less than the table, which is the width of the border between. */
 .ProseMirror tr:first-child > :is(td, th):first-child {
-  border-top-left-radius: 8px;
+  border-top-left-radius: 7px;
 }
 .ProseMirror tr:first-child > :is(td, th):last-child {
-  border-top-right-radius: 8px;
+  border-top-right-radius: 7px;
 }
 .ProseMirror tr:last-child > :is(td, th):first-child {
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: 7px;
 }
 .ProseMirror tr:last-child > :is(td, th):last-child {
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: 7px;
 }
 
 .ProseMirror th {
@@ -907,7 +909,8 @@ h1.page-title {
 .ProseMirror.ProseMirror-focused .tableWrapper.table-selected > table::after {
   content: "";
   position: absolute;
-  inset: 0;
+  /* Over the table's own 1px border, and a pixel in from it. */
+  inset: -1px;
   border: 2px solid var(--accent);
   border-radius: 8px;
   pointer-events: none;
