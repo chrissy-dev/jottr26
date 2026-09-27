@@ -11,12 +11,11 @@ const THEMES: { value: Theme; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ]
 
-/** The build as YYYYMMDDHHMM, in this device's time, so a later deploy is
- *  always the bigger number. */
+/** The build as MMDDHHMM, in this device's time. */
 function buildStamp() {
   const at = new Date(process.env.BUILD_TIME!)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${at.getFullYear()}${pad(at.getMonth() + 1)}${pad(at.getDate())}${pad(at.getHours())}${pad(at.getMinutes())}`
+  return `${pad(at.getMonth() + 1)}${pad(at.getDate())}${pad(at.getHours())}${pad(at.getMinutes())}`
 }
 
 /** The row the trail takes on a page: on the left the build this device is
@@ -28,7 +27,7 @@ export function SettingsBar() {
   const status = useSyncStatus()
   return (
     <>
-      <span className="flex h-8 items-center text-faint pointer-coarse:h-10">Version {buildStamp()}</span>
+      <span className="flex h-8 items-center text-faint pointer-coarse:h-10">V.{buildStamp()}</span>
       <button
         type="button"
         onClick={() => {
