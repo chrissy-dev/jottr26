@@ -1,0 +1,22 @@
+{
+  "name": "jottr-server",
+  "private": true,
+  "type": "module",
+  "description": "Jottr's self-hosted server: the sync API over SQLite, and the static app.",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/index.ts",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.ts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "hono": "4.13.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.2",
+    "typescript": "7.0.2"
+  }
+}

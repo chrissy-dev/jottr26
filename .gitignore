@@ -12,3 +12,6 @@ supabase/.temp/
 
 # local bug list for picking up in later sessions
 /BUGS.md
+
+# Self-hosted server data
+/server/data
