@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { isSupabaseConfigured, supabaseClient } from '@/lib/supabase/client'
+import { auth } from '@/lib/auth'
 
 /** Sends a signed-in visitor on the landing page straight to their notes.
  *
@@ -9,12 +9,10 @@ import { isSupabaseConfigured, supabaseClient } from '@/lib/supabase/client'
  *  this call — it has to happen here once the page is in the browser. */
 export function SignedInRedirect() {
   useEffect(() => {
-    if (!isSupabaseConfigured) return
-    void supabaseClient()
-      .auth.getSession()
-      .then(({ data }) => {
-        if (data.session) window.location.replace('/app')
-      })
+    if (!auth.configured) return
+    void auth.getSession().then((session) => {
+      if (session) window.location.replace('/app')
+    })
   }, [])
 
   return null

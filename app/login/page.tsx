@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { SetupNotice } from "@/components/SetupNotice";
-import { isSupabaseConfigured, supabaseClient } from "@/lib/supabase/client";
+import { auth } from "@/lib/auth";
 
 type Stage = "email" | "code";
 
 export default function LoginPage() {
-  if (!isSupabaseConfigured) return <SetupNotice />;
+  if (!auth.configured) return <SetupNotice />;
   return <SignIn />;
 }
 
@@ -22,12 +22,10 @@ function SignIn() {
   const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    void supabaseClient()
-      .auth.getSession()
-      .then(({ data }) => {
-        if (data.session) window.location.replace("/app");
-        else setChecking(false);
-      });
+    void auth.getSession().then((session) => {
+      if (session) window.location.replace("/app");
+      else setChecking(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -38,15 +36,9 @@ function SignIn() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: sendError } = await supabaseClient().auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/app`,
-      },
-    });
+    const sendError = await auth.signIn.sendCode(email.trim());
     setBusy(false);
-    if (sendError) setError(sendError.message);
+    if (sendError) setError(sendError);
     else setStage("code");
   };
 
@@ -54,14 +46,10 @@ function SignIn() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: verifyError } = await supabaseClient().auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: "email",
-    });
+    const verifyError = await auth.signIn.verifyCode(email.trim(), code.trim());
     if (verifyError) {
       setBusy(false);
-      setError(verifyError.message);
+      setError(verifyError);
       return;
     }
     window.location.replace("/app");

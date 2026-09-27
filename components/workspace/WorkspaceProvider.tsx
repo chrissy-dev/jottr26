@@ -1,8 +1,8 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import type { Session } from '@supabase/supabase-js'
-import { storedSession, supabaseClient } from '@/lib/supabase/client'
+import { auth, type AuthSession } from '@/lib/auth'
+import { supabaseClient } from '@/lib/supabase/client'
 import { closeDatabase, eraseDatabase, openDatabase } from '@/lib/db/dexie'
 import { moveSearchTexts } from '@/lib/db/searchText'
 import { releaseAll } from '@/lib/db/ydoc'
@@ -14,7 +14,7 @@ import { initialStatus, type SyncStatus } from '@/lib/sync/types'
  *  sync status, which moves with every keystroke, so that most of the app does
  *  not re-render each time the pending count does. */
 interface WorkspaceValue {
-  session: Session | null
+  session: AuthSession | null
   userId: string | null
   /** True once we know whether there is a session and, if so, the local
    *  database is open. Everything downstream can assume storage is ready. */
@@ -42,7 +42,7 @@ export function useSyncStatus() {
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<AuthSession | null>(null)
   const [ready, setReady] = useState(false)
   const [engineStatus, setEngineStatus] = useState<SyncStatus>(initialStatus)
   // Which account's database is open, so readiness can wait for it.
@@ -50,35 +50,34 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const engineRef = useRef<SyncEngine | null>(null)
 
   useEffect(() => {
-    const supabase = supabaseClient()
     let cancelled = false
 
-    // Open straight from storage rather than waiting on Supabase, which with an
+    // Open straight from storage rather than waiting on the server, which with an
     // expired token spends half a minute trying to refresh it when offline
     // and then reports no session at all.
     queueMicrotask(() => {
-      const stored = storedSession()
+      const stored = auth.storedSession()
       if (cancelled || !stored) return
       setSession((current) => current ?? stored)
       setReady(true)
     })
 
-    // A null from Supabase is only believed once it has also cleared storage:
-    // that is a real sign-out, not an unreachable server.
-    supabase.auth.getSession().then(({ data }) => {
+    // A null from the server is only believed once it has also cleared
+    // storage: that is a real sign-out, not an unreachable server.
+    auth.getSession().then((next) => {
       if (cancelled) return
-      setSession(data.session ?? storedSession())
+      setSession(next ?? auth.storedSession())
       setReady(true)
     })
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next ?? storedSession())
+    const unsubscribe = auth.onSessionChange((next) => {
+      setSession(next ?? auth.storedSession())
       setReady(true)
     })
 
     return () => {
       cancelled = true
-      subscription.subscription.unsubscribe()
+      unsubscribe()
     }
   }, [])
 
@@ -133,11 +132,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     engineRef.current = null
     releaseAll()
     // Local scope: a server-side revoke needs the network, and being unable to
-    // reach Supabase is not a reason to leave someone signed in on a device they
-    // are trying to hand back.
-    await supabaseClient()
-      .auth.signOut({ scope: 'local' })
-      .catch(() => undefined)
+    // reach the server is not a reason to leave someone signed in on a device
+    // they are trying to hand back.
+    await auth.signOut().catch(() => undefined)
 
     // Notes are cloud-backed; leaving a copy in IndexedDB on a device that may
     // be shared is not a trade worth making. Another tab holding the database

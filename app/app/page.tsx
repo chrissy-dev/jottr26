@@ -6,7 +6,7 @@ import { Workspace } from '@/components/workspace/Workspace'
 import { ServiceWorkerManager } from '@/components/ServiceWorkerManager'
 import { SetupNotice } from '@/components/SetupNotice'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { auth } from '@/lib/auth'
 
 /** The workspace is client-rendered on purpose.
  *
@@ -15,7 +15,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/client'
  *  locally, and render your notes from IndexedDB. A server-rendered, middleware
  *  protected route would be a blank screen on a plane. */
 export default function AppPage() {
-  if (!isSupabaseConfigured) return <SetupNotice />
+  if (!auth.configured) return <SetupNotice />
 
   return (
     <WorkspaceProvider>
