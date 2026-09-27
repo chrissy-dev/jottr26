@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Icon } from "@/components/ui/Icon";
 import { SetupNotice } from "@/components/SetupNotice";
 import { isSupabaseConfigured, supabaseClient } from "@/lib/supabase/client";
@@ -128,19 +129,7 @@ function SignIn() {
               >
                 Six-digit code
               </label>
-              <input
-                id="code"
-                ref={codeRef}
-                required
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]*"
-                maxLength={6}
-                value={code}
-                onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-2 leading-snug text-center text-[length:var(--body-size)] font-medium tracking-[0.35em] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2.5"
-              />
+              <CodeField value={code} onChange={setCode} inputRef={codeRef} busy={busy} />
 
               <Submit busy={busy} label="Sign in" icon="check" />
               {error && <ErrorNote>{error}</ErrorNote>}
@@ -162,6 +151,78 @@ function SignIn() {
         </div>
       </div>
     </main>
+  );
+}
+
+const CODE_LENGTH = 6;
+
+/** Six boxes, but one real input laid over them, so typing, deleting,
+ *  select-all and the one-time-code autofill all behave as a single field
+ *  would. The boxes only draw its digits. */
+function CodeField({
+  value,
+  onChange,
+  inputRef,
+  busy,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  busy: boolean;
+}) {
+  const [focused, setFocused] = useState(false);
+  const current = Math.min(value.length, CODE_LENGTH - 1);
+
+  return (
+    <div className="relative mt-1">
+      <div aria-hidden="true" className="grid grid-cols-6 gap-2">
+        {Array.from({ length: CODE_LENGTH }, (_, index) => (
+          <div
+            key={index}
+            className={`grid place-items-center rounded-lg border py-2 leading-snug text-[length:var(--body-size)] font-medium text-ink transition-colors pointer-coarse:py-2.5 ${
+              focused && index === current ? "border-[var(--accent)]" : "border-line"
+            }`}
+          >
+            {value[index] ?? "\u00a0"}
+          </div>
+        ))}
+      </div>
+      <input
+        id="code"
+        ref={inputRef}
+        required
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="[0-9]*"
+        maxLength={CODE_LENGTH}
+        value={value}
+        onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onSelect={(event) => {
+          // The caret is not drawn, so it stays at the end, where the next
+          // digit's box is lit. Selecting the whole code is left alone, so it
+          // can still be cleared in one go.
+          const input = event.currentTarget;
+          const end = input.value.length;
+          const whole = input.selectionStart === 0 && input.selectionEnd === end;
+          if (!whole && (input.selectionStart !== end || input.selectionEnd !== end)) {
+            input.setSelectionRange(end, end);
+          }
+        }}
+        onPaste={(event) => {
+          // A pasted code signs in straight away. The state is flushed first
+          // so the submit reads the pasted code rather than the old one.
+          const digits = event.clipboardData.getData("text").replace(/\D/g, "");
+          if (digits.length !== CODE_LENGTH) return;
+          event.preventDefault();
+          const form = event.currentTarget.form;
+          flushSync(() => onChange(digits));
+          if (!busy) form?.requestSubmit();
+        }}
+        className="absolute inset-0 size-full bg-transparent text-[length:var(--body-size)] text-transparent caret-transparent outline-none selection:bg-transparent"
+      />
+    </div>
   );
 }
 
