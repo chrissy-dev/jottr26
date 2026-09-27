@@ -160,11 +160,14 @@ function SidebarAction({
       type="button"
       onClick={onClick}
       aria-current={current ? 'page' : undefined}
-      className={`my-[0.5px] flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-muted transition-colors pointer-coarse:py-2.5 ${
+      // Spaced as the page rows above are, the icon in the same slot.
+      className={`my-px flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-muted transition-colors pointer-coarse:py-2 ${
         current ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
       }`}
     >
-      <Icon name={icon} size={16} className="text-muted" />
+      <span className="grid size-5 shrink-0 place-items-center pointer-coarse:size-6">
+        <Icon name={icon} size={15} className="text-muted" />
+      </span>
       <span className="flex-1 text-left">{label}</span>
     </button>
   )
