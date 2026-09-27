@@ -25,7 +25,7 @@ class Device {
 
   constructor(readonly name: string) {
     openDatabase(name)
-    this.engine = new SyncEngine(server.client(), name)
+    this.engine = new SyncEngine(server.backend(name), name)
   }
 
   /** Make this the device the module-level stores point at. */
@@ -643,7 +643,7 @@ describe('local-first sync', () => {
   })
 
   it('leaves nothing running when stopped while still starting', async () => {
-    const engine = new SyncEngine(server.client(), 'stopped-early')
+    const engine = new SyncEngine(server.backend('stopped-early'), 'stopped-early')
     const internals = engine as unknown as { pollTimer: unknown; cleanups: unknown[] }
     const starting = engine.start()
     engine.stop()
@@ -1023,7 +1023,7 @@ describe('local-first sync', () => {
     await laptop.setTitle(id, 'Typed in the other window')
 
     const sent: unknown[] = []
-    const follower = new SyncEngine(server.client(), 'laptop') as unknown as {
+    const follower = new SyncEngine(server.backend('laptop'), 'laptop') as unknown as {
       isLeader: boolean
       statusChannel: { postMessage: (message: unknown) => void }
       flushEdit: () => void

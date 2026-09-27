@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { SupabaseBackend } from '@/lib/sync/supabase'
 
 /** A stand-in for the browser APIs the sync engine touches, so the engine can
  *  be driven under Node exactly as it runs in a tab. */
@@ -95,6 +96,12 @@ export class FakeServer {
   stamp() {
     this.clock += 1
     return new Date(this.clock).toISOString()
+  }
+
+  /** The engine's view of this server: the real Supabase backend, talking
+   *  to the stand-in client below. */
+  backend(userId: string) {
+    return new SupabaseBackend(this.client(), userId)
   }
 
   client(): SupabaseClient {

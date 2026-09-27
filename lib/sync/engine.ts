@@ -1,4 +1,3 @@
-import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js'
 import * as Y from 'yjs'
 import {
   activeDatabase,
@@ -34,6 +33,7 @@ import {
   unsavedPages,
 } from '@/lib/db/ydoc'
 import { base64ToBytes, bytesToBase64 } from '@/lib/util/base64'
+import type { PageUpsert, SyncBackend } from './backend'
 import { initialStatus, type SyncStatus } from './types'
 
 /** Re-read a window either side of the last cursor. The server stamps
@@ -41,7 +41,6 @@ import { initialStatus, type SyncStatus } from './types'
  *  runs and commit after it — the overlap is what stops that row going missing.
  *  Re-applying rows is free: Yjs merges are idempotent and metadata is LWW. */
 const OVERLAP_MS = 30_000
-const PAGE_SIZE = 500
 const BLOB_CHUNK = 20
 /** Rows per upsert or purge request. */
 const PUSH_BATCH = 100
@@ -76,18 +75,6 @@ const CYCLE_TIMEOUT_MS = 90_000
  *  carry deletes on their own; this is the backstop for anything they miss,
  *  like pages deleted before tombstones existed. */
 const RECONCILE_INTERVAL_MS = 10 * 60_000
-
-interface ServerPage {
-  id: string
-  title: string
-  parent_id: string | null
-  sort_key: string
-  is_favorite: boolean
-  deleted_at: string | null
-  purged_at?: string | null
-  created_at: string
-  updated_at: string
-}
 
 type Listener = (status: SyncStatus) => void
 
@@ -160,7 +147,7 @@ function changes<T extends object>(row: T, patch: Partial<T>) {
 }
 
 export class SyncEngine {
-  private readonly supabase: SupabaseClient
+  private readonly backend: SyncBackend
   private readonly userId: string
   private readonly db: JottrDB
 
@@ -173,7 +160,8 @@ export class SyncEngine {
   private lockAttempt = 0
   private leaderAttempt = 0
   private statusChannel: BroadcastChannel | null = null
-  private channel: RealtimeChannel | null = null
+  /** Stops the server's change hints, while they are on. */
+  private unwatch: (() => void) | null = null
 
   private inFlight = false
   private requeue = false
@@ -216,8 +204,8 @@ export class SyncEngine {
    *  one that keeps failing cannot hold every document behind it. */
   private failedDocs = new Set<string>()
 
-  constructor(supabase: SupabaseClient, userId: string) {
-    this.supabase = supabase
+  constructor(backend: SyncBackend, userId: string) {
+    this.backend = backend
     this.userId = userId
     this.db = openDatabase(userId)
   }
@@ -496,38 +484,25 @@ export class SyncEngine {
   }
 
   private dropRealtime() {
-    if (this.channel) void this.supabase.removeChannel(this.channel)
-    this.channel = null
+    this.unwatch?.()
+    this.unwatch = null
     this.realtimeUp = false
   }
 
   private subscribeRealtime() {
-    if (this.channel) return
-    const bump = (event?: { new?: { id?: unknown; updated_at?: unknown } }) => {
-      const stamp = stampKey(event?.new?.updated_at)
-      if (stamp && this.ownStamps.delete(`${event?.new?.id} ${stamp}`)) return
+    if (this.unwatch || !this.backend.watch) return
+    const bump = (row: { id?: unknown; updated_at?: unknown }) => {
+      const stamp = stampKey(row.updated_at)
+      if (stamp && this.ownStamps.delete(`${row.id} ${stamp}`)) return
       if (this.realtimeTimer) clearTimeout(this.realtimeTimer)
       this.realtimeTimer = setTimeout(() => this.request(), REALTIME_DEBOUNCE_MS)
     }
 
-    // Only pages. A saved document stamps its page row on the server, so this
-    // one small row stands in for the blob, which realtime would otherwise
-    // carry in full, twice over, to every device on every save.
-    const channel = this.supabase
-      .channel(`jottr:${this.userId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'pages', filter: `user_id=eq.${this.userId}` },
-        bump,
-      )
-    this.channel = channel
-    channel.subscribe((state) => {
-      // A leftover callback from a channel this tab has since let go of.
-      if (this.channel !== channel) return
-      // Realtime is a hint, never the truth: every event turns into a REST
-      // pull, and a reconnect just means pulling again from the cursor.
-      this.realtimeUp = state === 'SUBSCRIBED'
-      if (state === 'SUBSCRIBED') this.request()
+    this.unwatch = this.backend.watch(bump, (up) => {
+      // Realtime is a hint, never the truth: every event turns into a pull,
+      // and a reconnect just means pulling again from the cursor.
+      this.realtimeUp = up
+      if (up) this.request()
     })
   }
 
@@ -729,52 +704,16 @@ export class SyncEngine {
     return this.pullDocs(signal)
   }
 
-  /** Every row of `table` changed since `cursor`, less the overlap, oldest
-   *  first, a page of rows at a time.
-   *
-   *  Keyset paging on (updated_at, id): with offsets, a row another device
-   *  edits mid-scan moves to the end and shifts the rest left, so one row is
-   *  never read, and the cursor then moves past it for good. The id breaks
-   *  ties, since one transaction stamps every row it writes with the same
-   *  time. */
-  private async *changedSince<T extends { updated_at: string }>(
-    table: string,
-    columns: string,
-    idColumn: keyof T & string,
-    cursor: number,
-    signal: AbortSignal,
-  ): AsyncGenerator<T[]> {
-    const since = new Date(Math.max(0, cursor - OVERLAP_MS)).toISOString()
-    let last: T | null = null
-    for (;;) {
-      let query = this.supabase
-        .from(table)
-        .select(columns)
-        .gte('updated_at', since)
-        .order('updated_at', { ascending: true })
-        .order(idColumn, { ascending: true })
-      // The server's own timestamp string, which keeps the microseconds a
-      // Date would round away.
-      if (last) {
-        const at = last.updated_at
-        const id = String(last[idColumn])
-        query = query.or(`updated_at.gt."${at}",and(updated_at.eq."${at}",${idColumn}.gt."${id}")`)
-      }
-      const { data, error } = await query.limit(PAGE_SIZE).abortSignal(signal)
-
-      if (error) throw new Error(error.message)
-      const rows = (data ?? []) as unknown as T[]
-      if (rows.length > 0) yield rows
-      if (rows.length < PAGE_SIZE) return
-      last = rows[rows.length - 1]
-    }
+  /** Where a pull from `cursor` starts reading: the overlap behind it. */
+  private since(cursor: number) {
+    return new Date(Math.max(0, cursor - OVERLAP_MS)).toISOString()
   }
 
   private async pullPages(signal: AbortSignal) {
     const cursor = await readMeta<number>(this.db, META_PAGES_CURSOR, 0)
     let newest = cursor
 
-    for await (const rows of this.changedSince<ServerPage>('pages', '*', 'id', cursor, signal)) {
+    for await (const rows of this.backend.pagesSince(this.since(cursor), signal)) {
       const purged: string[] = []
 
       await this.db.transaction('rw', [this.db.pages, this.db.purges], async () => {
@@ -854,14 +793,7 @@ export class SyncEngine {
     // Versions first, blobs second. Most of what the overlap window returns is
     // this device's own last push, and re-downloading those blobs every cycle
     // would be the single most wasteful thing the app does.
-    type Row = { page_id: string; version: number; updated_at: string }
-    for await (const rows of this.changedSince<Row>(
-      'page_docs',
-      'page_id, version, updated_at',
-      'page_id',
-      cursor,
-      signal,
-    )) {
+    for await (const rows of this.backend.docVersionsSince(this.since(cursor), signal)) {
       const locals = await this.db.docStates.bulkGet(rows.map((row) => row.page_id))
       for (const [index, row] of rows.entries()) {
         const at = Date.parse(row.updated_at)
@@ -885,15 +817,7 @@ export class SyncEngine {
     // one round trip per twenty pages. A batch that fails stops the others
     // taking new work, and the pull reports it once the rest have settled.
     const takeIn = async (chunk: string[]) => {
-      const { data, error } = await this.supabase
-        .from('page_docs')
-        .select('page_id, ydoc, version')
-        .in('page_id', chunk)
-        .abortSignal(signal)
-
-      if (error) throw new Error(error.message)
-
-      for (const row of (data ?? []) as Array<{ page_id: string; ydoc: string; version: number }>) {
+      for (const row of await this.backend.fetchDocs(chunk, signal)) {
         try {
           // Left at the old version when the disk refused it, so a push merges
           // with the server rather than being accepted over it.
@@ -963,14 +887,13 @@ export class SyncEngine {
   }
 
   /** With no session to hand — its token expired and the refresh has not
-   *  gone through yet — supabase-js sends the anon key instead, and row-level
+   *  gone through yet — Supabase sends the anon key instead, and row-level
    *  security answers every read with an empty list rather than an error. A
    *  pull would learn nothing, and reconcile would take that emptiness as
    *  every page having been deleted and drop them all from this device. So a
    *  cycle waits for a real session, as it waits out any other failure. */
   private async requireSession() {
-    const { data } = await this.supabase.auth.getSession()
-    if (!data.session) throw new Error('Waiting to sign back in to the server')
+    if (!(await this.backend.hasSession())) throw new Error('Waiting to sign back in to the server')
   }
 
   // --- reconcile ----------------------------------------------------------
@@ -982,32 +905,7 @@ export class SyncEngine {
   private async reconcile(signal: AbortSignal) {
     if (Date.now() - this.reconciledAt < RECONCILE_INTERVAL_MS) return
 
-    // Keyset paging by id: unlike offsets, a row created or deleted by another
-    // device mid-scan cannot shift a live id out of the pages being read, and
-    // a missed id here would mean deleting a page that still exists.
-    const live = new Set<string>()
-    let after = ''
-    // How many the first fetch said there are. A later fetch sent as the anon
-    // key, its token having expired in between, comes back empty and ends the
-    // scan early, and this is how that is told from having read them all.
-    let expected = 0
-    for (;;) {
-      // Tombstones are left out: a purged page is as gone as a missing one.
-      let query = this.supabase
-        .from('pages')
-        .select('id', after ? undefined : { count: 'exact' })
-        .is('purged_at', null)
-        .order('id', { ascending: true })
-      if (after) query = query.gt('id', after)
-      const { data, error, count } = await query.limit(PAGE_SIZE).abortSignal(signal)
-
-      if (error) throw new Error(error.message)
-      if (!after) expected = count ?? 0
-      const rows = (data ?? []) as Array<{ id: string }>
-      if (rows.length === 0) break
-      for (const row of rows) live.add(row.id)
-      after = rows[rows.length - 1].id
-    }
+    const { ids: live, expected } = await this.backend.livePageIds(signal)
 
     // Only rows the server has acknowledged. One it has never seen is new on
     // this device and is about to be pushed.
@@ -1053,8 +951,7 @@ export class SyncEngine {
 
     for (const batch of chunks(queued, PUSH_BATCH)) {
       const ids = batch.map((row) => row.id)
-      const { error } = await this.supabase.rpc('purge_pages', { p_ids: ids }).abortSignal(signal)
-      if (error) throw new Error(error.message)
+      await this.backend.purgePages(ids, signal)
       await this.db.purges.bulkDelete(ids)
     }
   }
@@ -1081,9 +978,8 @@ export class SyncEngine {
       chunks(pages, PUSH_BATCH).map((batch) => ({ fields, batch })),
     )
     for (const { fields, batch } of batches) {
-      const payload = batch.map((page: PageRow) => ({
+      const payload = batch.map((page: PageRow): PageUpsert => ({
         id: page.id,
-        user_id: this.userId,
         created_at: new Date(page.createdAt).toISOString(),
         ...(fields.has('title') && { title: page.title }),
         ...(fields.has('parentId') && { parent_id: page.parentId || null }),
@@ -1094,15 +990,7 @@ export class SyncEngine {
         }),
       }))
 
-      const { data, error } = await this.supabase
-        .from('pages')
-        .upsert(payload, { onConflict: 'id' })
-        .select('id, updated_at')
-        .abortSignal(signal)
-
-      if (error) throw new Error(error.message)
-
-      const rows = (data ?? []) as Array<{ id: string; updated_at: string }>
+      const rows = await this.backend.upsertPages(payload, signal)
       const stamps = new Map(rows.map((row) => [row.id, Date.parse(row.updated_at)]))
       for (const row of rows) this.recordOwnStamp(row.id, row.updated_at)
 
@@ -1176,20 +1064,7 @@ export class SyncEngine {
       const before = Y.encodeStateVector(handle.doc)
       const bytes = Y.encodeStateAsUpdate(handle.doc)
 
-      const { data, error } = await this.supabase
-        .rpc('push_page_doc', {
-          p_page_id: state.pageId,
-          p_ydoc: bytesToBase64(bytes),
-          p_base_version: base,
-        })
-        .abortSignal(signal)
-
-      if (error) throw new Error(error.message)
-
-      const result = (
-        data as Array<{ ydoc: string; version: number; applied: boolean; saved_at?: string | null }>
-      )?.[0]
-      if (!result) throw new Error('push_page_doc returned nothing')
+      const result = await this.backend.pushDoc(state.pageId, bytesToBase64(bytes), base, signal)
 
       // The server has no live page for this document. If it once did, the
       // page was deleted for good on another device before this one heard,
@@ -1201,8 +1076,8 @@ export class SyncEngine {
       }
 
       if (result.applied) {
-        // Absent from a server that has not had schema.sql re-run, and then
-        // nothing is recorded: the echo just costs a cycle, as it always did.
+        // Absent when the server cannot say, and then nothing is recorded:
+        // the echo just costs a cycle, as it always did.
         this.recordOwnStamp(state.pageId, result.saved_at)
         const movedHere = !sameBytes(before, Y.encodeStateVector(handle.doc))
         await patchDocState(this.db, state.pageId, (current) => ({

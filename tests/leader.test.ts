@@ -86,8 +86,8 @@ const lastSynced = (engine: Engine) => engine.getStatus().lastSyncedAt ?? 0
 /** Two tabs of the app open for the same account — or, on a phone, the tab
  *  in use and an older one the browser has frozen in the background. */
 describe('more than one tab', () => {
-  const first = new SyncEngine(server.client(), 'tabs')
-  const second = new SyncEngine(server.client(), 'tabs')
+  const first = new SyncEngine(server.backend('tabs'), 'tabs')
+  const second = new SyncEngine(server.backend('tabs'), 'tabs')
 
   after(async () => {
     first.stop()
