@@ -181,7 +181,7 @@ function SidebarAction({
         current ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
       }`}
     >
-      <Icon name={icon} size={16} className="text-faint" />
+      <Icon name={icon} size={16} className="text-muted" />
       <span className="flex-1 text-left">{label}</span>
     </button>
   )

@@ -25,7 +25,7 @@ export function PageRowButton({
     >
       {icon && (
         <span className="grid size-5 shrink-0 place-items-center pointer-coarse:size-6">
-          <Icon name="file" size={15} className="text-faint" />
+          <Icon name="file" size={15} className="text-muted" />
         </span>
       )}
       <span

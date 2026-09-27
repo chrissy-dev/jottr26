@@ -20,10 +20,11 @@
   --text: #2c2c2c;
   --text-muted: #6f6e6a;
   --text-faint: #a3a29d;
-  /* The sidebar's greys, a step darker: on its deeper shade the page's own
-     read washed out. Still well short of the text itself. */
-  --sidebar-text-muted: #62615d;
-  --sidebar-text-faint: #8c8b86;
+  /* The sidebar's own greys: its text and icons one softer ink, and the
+     pale bits (Add new, headings, row buttons) a lighter grey. */
+  --sidebar-text: #5f5e58;
+  --sidebar-text-muted: #5f5e58;
+  --sidebar-text-faint: #91918d;
 
   --line: #e9e8e4;
   --line-strong: #dcdbd6;
@@ -72,6 +73,7 @@
   --text-muted: #a3a29c;
   --text-faint: #6a6964;
   /* A step lighter, as the light sidebar's are a step darker. */
+  --sidebar-text: #e3e2de;
   --sidebar-text-muted: #b0afa9;
   --sidebar-text-faint: #85847e;
 
@@ -135,6 +137,9 @@
 .ProseMirror div[data-type="subpages"] {
   --text-muted: var(--sidebar-text-muted);
   --text-faint: var(--sidebar-text-faint);
+}
+.sidebar-tones {
+  --text: var(--sidebar-text);
 }
 
 html,
