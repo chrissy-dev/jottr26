@@ -196,7 +196,7 @@ export function Workspace() {
                   there. */}
               {page && (
                 <div
-                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 pointer-coarse:text-[14px] ${wide ? 'right-4' : 'right-2'} ${
                     wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
                   }`}
                 >
@@ -208,7 +208,7 @@ export function Workspace() {
                   be, and the button to empty it where the star would be. */}
               {!page && view === 'trash' && (
                 <div
-                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 pointer-coarse:text-[14px] ${wide ? 'right-4' : 'right-2'} ${
                     wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
                   }`}
                 >
@@ -218,7 +218,7 @@ export function Workspace() {
               {/* And the settings put the version there. */}
               {!page && view === 'settings' && (
                 <div
-                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 pointer-coarse:text-[14px] ${wide ? 'right-4' : 'right-2'} ${
                     wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
                   }`}
                 >
