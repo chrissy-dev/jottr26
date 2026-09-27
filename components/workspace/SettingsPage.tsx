@@ -62,7 +62,7 @@ export function SettingsPage() {
     <>
       <h1 className="page-title">Settings</h1>
 
-      <ul className="divide-y divide-line text-[length:var(--body-size)]">
+      <ul className="divide-y divide-line">
         <Row label="Account">
           <span className="min-w-0 truncate text-muted">{session?.user.email}</span>
         </Row>
