@@ -20,6 +20,7 @@ import {
 } from '@tiptap/pm/tables'
 import type { Mark, Node, ResolvedPos } from '@tiptap/pm/model'
 import { GapCursor } from '@tiptap/pm/gapcursor'
+import { AddMarkStep, RemoveMarkStep, ReplaceAroundStep, ReplaceStep } from '@tiptap/pm/transform'
 import { Table } from '@tiptap/extension-table'
 import { isChangeOrigin } from '@tiptap/extension-collaboration'
 import { isCellNode, pm, removeBlockToAbove, replaceWithEmptyLine, replacingSelection } from './helpers'
@@ -107,32 +108,71 @@ export function columnTotals(
   return totals.map((cents) => (cents === null ? null : cents / 100))
 }
 
-/** The money classes and totals rows for every finance table in the document. */
-function financeDecorations(doc: Node): DecorationSet {
-  const decorations: Decoration[] = []
-  doc.descendants((node, pos) => {
+/** The money classes and totals row for one table, if it is in finance mode. */
+function tableDecorations(table: Node, pos: number, out: Decoration[]) {
+  if (!table.attrs.finance) return
+  const totals = columnTotals(table, (cell, offset) => {
+    const cellPos = pos + 1 + offset
+    out.push(Decoration.node(cellPos, cellPos + cell.nodeSize, { class: 'money' }))
+  })
+  out.push(
+    Decoration.widget(pos + 1 + table.content.size, () => totalRow(totals), {
+      side: 1,
+      ignoreSelection: true,
+      // Keyed on the figures, so the row is reused until one changes
+      // rather than being rebuilt on every keystroke.
+      key: `finance-total:${totals.join('|')}`,
+    }),
+  )
+}
+
+/** Every table with any part in from–to, by position. */
+function tablesBetween(doc: Node, from: number, to: number, found: Map<number, Node>) {
+  doc.nodesBetween(from, to, (node, pos) => {
     // Tables sit among blocks, never inside a line of text.
     if (node.isTextblock || node.isAtom) return false
     if (node.type.name !== 'table') return true
-    if (!node.attrs.finance) return false
-
-    const totals = columnTotals(node, (cell, offset) => {
-      const cellPos = pos + 1 + offset
-      decorations.push(Decoration.node(cellPos, cellPos + cell.nodeSize, { class: 'money' }))
-    })
-    decorations.push(
-      Decoration.widget(pos + 1 + node.content.size, () => totalRow(totals), {
-        side: 1,
-        ignoreSelection: true,
-        // Keyed on the figures, so the row is reused until one changes
-        // rather than being rebuilt on every keystroke.
-        key: `finance-total:${totals.join('|')}`,
-      }),
-    )
+    found.set(pos, node)
     // Tables do not nest here, so there is nothing below worth walking.
     return false
   })
+}
+
+/** The money classes and totals rows for every finance table in the document. */
+function financeDecorations(doc: Node): DecorationSet {
+  const tables = new Map<number, Node>()
+  tablesBetween(doc, 0, doc.content.size, tables)
+  const decorations: Decoration[] = []
+  for (const [pos, table] of tables) tableDecorations(table, pos, decorations)
   return DecorationSet.create(doc, decorations)
+}
+
+/** Last time's decorations, moved along with the edit, and worked out afresh
+ *  only for the tables the edit reached. Working out every table again read
+ *  every amount on the page with each keystroke, in a line nowhere near one.
+ *  A step that moves nothing yet changes the document — an attribute set in
+ *  place — gives no range to go on, so it has the whole page worked out. A
+ *  mark changes no amount, so it needs nothing worked out at all. */
+function mapFinanceDecorations(tr: Transaction, previous: DecorationSet): DecorationSet {
+  const touched = new Map<number, Node>()
+  for (const [index, step] of tr.steps.entries()) {
+    if (step instanceof AddMarkStep || step instanceof RemoveMarkStep) continue
+    if (!(step instanceof ReplaceStep || step instanceof ReplaceAroundStep)) return financeDecorations(tr.doc)
+    const later = tr.mapping.slice(index + 1)
+    step.getMap().forEach((_oldStart, _oldEnd, newStart, newEnd) => {
+      const from = later.map(newStart, -1)
+      const to = Math.max(from, later.map(newEnd, 1))
+      tablesBetween(tr.doc, from, Math.min(to, tr.doc.content.size), touched)
+    })
+  }
+  let decorations = previous.map(tr.mapping, tr.doc)
+  if (touched.size === 0) return decorations
+  const fresh: Decoration[] = []
+  for (const [pos, table] of touched) {
+    decorations = decorations.remove(decorations.find(pos, pos + table.nodeSize))
+    tableDecorations(table, pos, fresh)
+  }
+  return decorations.add(tr.doc, fresh)
 }
 
 interface Edit {
@@ -269,11 +309,12 @@ export function financePlugin() {
       return tr
     },
 
-    // Rebuilt only when the document changes: a caret moving through the
-    // page leaves every amount and total where it was.
+    // Worked out again only when the document changes, and then only for
+    // the tables it changed in: a caret moving through the page leaves every
+    // amount and total where it was.
     state: {
       init: (_, state) => financeDecorations(state.doc),
-      apply: (tr, decorations) => (tr.docChanged ? financeDecorations(tr.doc) : decorations),
+      apply: (tr, decorations) => (tr.docChanged ? mapFinanceDecorations(tr, decorations) : decorations),
     },
 
     props: {
