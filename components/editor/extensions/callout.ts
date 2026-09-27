@@ -1,5 +1,5 @@
 import { mergeAttributes, Node } from '@tiptap/core'
-import { liftEmptyBlock } from '@tiptap/pm/commands'
+import { liftEmptyBlock, wrapIn } from '@tiptap/pm/commands'
 import type { Command } from '@tiptap/pm/state'
 import type { ResolvedPos } from '@tiptap/pm/model'
 import { pm } from './helpers'
@@ -48,8 +48,10 @@ function insideCallout($from: ResolvedPos, name: string) {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     callout: {
-      /** Wrap the selection, or unwrap it if it is already in a callout. */
-      toggleCallout: () => ReturnType
+      /** Wrap the selection in a callout, even one already in a callout: boxes
+       *  nest, as accordions do. The way out of one is Enter on its empty last
+       *  line. */
+      setCallout: () => ReturnType
     }
   }
 }
@@ -72,10 +74,10 @@ export const Callout = Node.create({
 
   addCommands() {
     return {
-      toggleCallout:
+      setCallout:
         () =>
-        ({ commands }) =>
-          commands.toggleWrap(this.name),
+        ({ state, dispatch }) =>
+          wrapIn(this.type)(state, dispatch),
     }
   },
 

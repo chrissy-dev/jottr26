@@ -60,7 +60,7 @@ export const slashItems: SlashItem[] = [
     title: 'Callout',
     icon: 'callout',
     keywords: ['note', 'box', 'panel', 'aside', 'info', 'highlight'],
-    run: (editor, range) => editor.chain().focus().deleteRange(range).toggleCallout().run(),
+    run: (editor, range) => editor.chain().focus().deleteRange(range).setCallout().run(),
   },
   {
     id: 'accordion',

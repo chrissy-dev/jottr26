@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { lift, wrapIn } from '@tiptap/pm/commands'
+import { wrapIn } from '@tiptap/pm/commands'
 import type { Node } from '@tiptap/pm/model'
 import { leaveCallout } from '@/components/editor/extensions/callout'
 import { caretAt, outline, page, pageSchema as schema, paragraph, run } from './editor'
@@ -18,17 +18,21 @@ describe('callout block', () => {
     assert.deepEqual(outline(state), ['title', 'callout'])
   })
 
-  it('wraps the paragraph the caret is in, and unwraps it again', () => {
+  it('wraps the paragraph the caret is in, and nests a second box inside the first', () => {
     const start = page(paragraph('Watch out'))
     const wrapped = run(start, wrapIn(callout))
     assert.equal(wrapped.applied, true)
     assert.deepEqual(outline(wrapped.state), ['title', 'callout'])
     assert.equal(wrapped.state.doc.lastChild?.firstChild?.textContent, 'Watch out')
 
-    // What toggleCallout does the second time round.
-    const unwrapped = run(wrapped.state, lift)
-    assert.equal(unwrapped.applied, true)
-    assert.deepEqual(outline(unwrapped.state), ['title', 'paragraph'])
+    // What setCallout does the second time round: a box in the box, as an
+    // accordion goes in an accordion, not the first box taken away.
+    const nested = run(wrapped.state, wrapIn(callout))
+    assert.equal(nested.applied, true)
+    nested.state.doc.check()
+    assert.deepEqual(outline(nested.state), ['title', 'callout'])
+    assert.equal(nested.state.doc.lastChild?.firstChild?.type.name, 'callout')
+    assert.equal(nested.state.doc.lastChild?.firstChild?.textContent, 'Watch out')
   })
 
   it('holds more than a paragraph: a code block and a list go in too', () => {
