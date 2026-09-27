@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { activeDatabase } from './dexie'
 import { editedKey } from './editedAt'
@@ -63,12 +63,19 @@ export function useGrandchildPages(parentId: string, enabled: boolean): TreeNode
  *  the server does not, and letting the editor fill in an empty document would
  *  give the page two titles once the real one merged in — so it waits. */
 export function useDocReady(pageId: string): boolean | undefined {
+  // Once there, a document never leaves, so its state row — rewritten on every
+  // keystroke — stops being read, and typing stops waking this query.
+  const arrived = useRef<string | null>(null)
   return useLiveQuery(async () => {
     const db = activeDatabase()
     if (!db) return undefined
-    const [page, state] = await Promise.all([db.pages.get(pageId), db.docStates.get(pageId)])
+    const page = await db.pages.get(pageId)
     if (!page) return undefined
-    return page.origin === 'local' || (state?.version ?? 0) > 0
+    if (page.origin === 'local' || arrived.current === pageId) return true
+    const state = await db.docStates.get(pageId)
+    if ((state?.version ?? 0) === 0) return false
+    arrived.current = pageId
+    return true
   }, [pageId])
 }
 
