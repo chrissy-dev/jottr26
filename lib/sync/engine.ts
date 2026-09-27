@@ -1193,14 +1193,13 @@ export class SyncEngine {
       )?.[0]
       if (!result) throw new Error('push_page_doc returned nothing')
 
-      // The server has no live page for this document. If it once did, the
-      // page was deleted for good on another device before this one heard,
-      // so drop it now. If it never did, the row has yet to be uploaded:
-      // leave the document dirty for the next sync.
-      if (result.applied && result.version === 0) {
-        if (page.serverUpdatedAt > 0) await forgetPages(this.db, [state.pageId])
-        break
-      }
+      // The server shows no live page for this document: it was deleted for
+      // good on another device, its row has yet to be uploaded, or the session
+      // lapsed mid-cycle and the push went out as the anon user, whom
+      // row-level security shows nothing. Only the first is a reason to drop
+      // it, and the tombstone the next pull reads says so; this answer alone
+      // cannot tell them apart. So the document stays dirty until then.
+      if (result.applied && result.version === 0) break
 
       if (result.applied) {
         // Absent from a server that has not had schema.sql re-run, and then

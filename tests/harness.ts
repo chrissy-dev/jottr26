@@ -257,7 +257,9 @@ export class FakeServer {
 
     const settle = (params: PushParams) => {
       this.counts.rpc += 1
-      const page = this.pages.get(params.p_page_id)
+      // As the anon user, row-level security hides every page, so the real
+      // function finds none and answers as it does for a purged one.
+      const page = this.sessionLost ? undefined : this.pages.get(params.p_page_id)
       if (!page || page.purged_at) {
         return Promise.resolve({ data: [{ ydoc: '', version: 0, applied: true, saved_at: null }], error: null })
       }

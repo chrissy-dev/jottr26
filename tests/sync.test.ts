@@ -642,6 +642,32 @@ describe('local-first sync', () => {
     }
   })
 
+  it('keeps a page and its unpushed edits when the session lapses just before its document is pushed', async () => {
+    await laptop.focus()
+    const id = await createPage()
+    await laptop.setTitle(id, 'Kept')
+    await laptop.sync()
+    await phone.sync()
+
+    await phone.type(id, 'typed before the session lapsed')
+
+    // The cycle checked its session at the start; it lapses by the time the
+    // document goes out, so the push is answered as the anon user.
+    server.sessionLost = true
+    try {
+      await phone.pushWithoutPulling()
+    } finally {
+      server.sessionLost = false
+    }
+
+    assert.ok(await phone.page(id), 'a page the server still has must survive')
+    assert.equal(await phone.pendingCount(), 1, 'its edit must still be waiting to go')
+
+    await phone.sync()
+    await laptop.sync()
+    assert.match(await laptop.text(id), /typed before the session lapsed/)
+  })
+
   it('leaves nothing running when stopped while still starting', async () => {
     const engine = new SyncEngine(server.client(), 'stopped-early')
     const internals = engine as unknown as { pollTimer: unknown; cleanups: unknown[] }
