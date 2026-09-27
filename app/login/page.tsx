@@ -170,7 +170,7 @@ function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "ma
     <button
       type="submit"
       disabled={busy}
-      className="mt-3 flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
+      className="mt-4 flex items-center gap-1.5 rounded-lg bg-accent px-4 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
     >
       {busy ? (
         <Icon name="refresh" size={14} className="animate-spin" />
