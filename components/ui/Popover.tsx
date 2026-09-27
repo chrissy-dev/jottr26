@@ -114,7 +114,7 @@ export function Popover({
               maxWidth: 'calc(100vw - 16px)',
               visibility: position ? 'visible' : 'hidden',
             }}
-            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] ${className}`}
+            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-subtle)] ${className}`}
           >
             {children(close)}
           </div>,

@@ -137,7 +137,7 @@ export function TableMenu({ editor }: { editor: Editor }) {
       // later, so the chrome is tied to the contents to keep an empty pill from
       // flashing in the gap. That also holds the pop-in back until there is
       // something to see.
-      className={state ? 'flex items-center gap-1 rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] pop-in' : ''}
+      className={state ? 'flex items-center gap-1 rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-subtle)] pop-in' : ''}
     >
       {state && <TableControls editor={editor} state={state} />}
     </BubbleMenu>
