@@ -1,13 +1,16 @@
 'use client'
 
-import { memo, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Icon, type IconName } from '@/components/ui/Icon'
-import { PageMenu } from './PageMenu'
-import { PageRowButton, RowActions } from './PageRow'
 import { PageTree } from './PageTree'
 import { buildTree, useDrawnRows, type TreeNode } from '@/lib/db/hooks'
 import { createPage } from '@/lib/db/pages'
-import { toggleExpanded, useExpanded } from '@/lib/util/expanded'
+import {
+  toggleExpanded,
+  toggleExpandedFavourite,
+  useExpanded,
+  useExpandedFavourites,
+} from '@/lib/util/expanded'
 import { raiseKeyboard } from '@/lib/util/keyboard'
 import type { View } from '@/lib/util/route'
 import type { PageRow } from '@/lib/db/schema'
@@ -26,12 +29,25 @@ export function Sidebar({
   onOpenView: (view: View) => void
 }) {
   const expanded = useExpanded()
+  const expandedFavourites = useExpandedFavourites()
 
   // Typing changes only rows' search text and edit time, which the sidebar
   // doesn't draw; kept rows mean the tree isn't rebuilt or redrawn for it.
   const rows = useDrawnRows(pages)
   const tree: TreeNode[] = useMemo(() => buildTree(rows), [rows])
-  const favourites = useMemo(() => rows.filter((page) => page.isFavorite), [rows])
+  // Each favourite with its subpages, taken from the tree so they read the
+  // same in both sections.
+  const favourites: TreeNode[] = useMemo(() => {
+    const nodes = new Map<string, TreeNode>()
+    const walk = (list: TreeNode[]) => {
+      for (const node of list) {
+        nodes.set(node.page.id, node)
+        walk(node.children)
+      }
+    }
+    walk(tree)
+    return rows.filter((page) => page.isFavorite).map((page) => nodes.get(page.id)!)
+  }, [rows, tree])
 
   return (
     <div className="sidebar-tones flex h-full flex-col bg-sidebar">
@@ -76,11 +92,14 @@ export function Sidebar({
         {favourites.length > 0 && (
           <div className="mt-3">
             <SectionLabel>Favourites</SectionLabel>
-            <ul className="min-w-0">
-              {favourites.map((page) => (
-                <Favourite key={page.id} page={page} isOpen={openId === page.id} onOpen={onOpen} />
-              ))}
-            </ul>
+            <PageTree
+              nodes={favourites}
+              openId={openId}
+              onOpen={onOpen}
+              expanded={expandedFavourites}
+              onToggleExpand={toggleExpandedFavourite}
+              draggable={false}
+            />
           </div>
         )}
       </nav>
@@ -102,33 +121,6 @@ export function Sidebar({
     </div>
   )
 }
-
-/** A row drawn like the page tree's, flat and without the tree's drag, which
- *  would move the page itself rather than reorder the favourites. */
-const Favourite = memo(function Favourite({
-  page,
-  isOpen,
-  onOpen,
-}: {
-  page: PageRow
-  isOpen: boolean
-  onOpen: (id: string | null) => void
-}) {
-  return (
-    <li className="py-[1.5px]">
-      <div
-        className={`group flex items-center gap-1.5 rounded-md pl-1.5 pr-1 transition-colors ${
-          isOpen ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
-        }`}
-      >
-        <PageRowButton page={page} isOpen={isOpen} onOpen={onOpen} />
-        <RowActions>
-          <PageMenu page={page} />
-        </RowActions>
-      </div>
-    </li>
-  )
-})
 
 function AddPage({ onClick }: { onClick: () => void }) {
   return (

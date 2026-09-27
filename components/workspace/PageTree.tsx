@@ -14,6 +14,9 @@ interface TreeProps {
   onOpen: (id: string) => void
   expanded: ReadonlySet<string>
   onToggleExpand: (id: string) => void
+  /** Off for the favourites, where dragging a row would move the page itself
+   *  rather than reorder the favourites. */
+  draggable?: boolean
   depth?: number
 }
 
@@ -73,6 +76,7 @@ const Row = memo(function Row({
   onOpen,
   expanded,
   onToggleExpand,
+  draggable = true,
   dragId,
   drop,
   setDragId,
@@ -83,7 +87,7 @@ const Row = memo(function Row({
   const hasChildren = children.length > 0
 
   const onDragOver = (event: React.DragEvent) => {
-    if (!dragId || dragId === page.id) return
+    if (!draggable || !dragId || dragId === page.id) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
     const rect = event.currentTarget.getBoundingClientRect()
@@ -106,8 +110,9 @@ const Row = memo(function Row({
   return (
     <li className="py-[1.5px]">
       <div
-        draggable
+        draggable={draggable}
         onDragStart={(event) => {
+          if (!draggable) return
           setDragId(page.id)
           event.dataTransfer.effectAllowed = 'move'
           // Not text/plain, which the editor would paste in as the page's id
@@ -188,6 +193,7 @@ const Row = memo(function Row({
           onOpen={onOpen}
           expanded={expanded}
           onToggleExpand={onToggleExpand}
+          draggable={draggable}
           dragId={dragId}
           drop={drop}
           setDragId={setDragId}
