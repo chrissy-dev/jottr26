@@ -11,7 +11,7 @@ const when = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 })
 
-const count = (n: number) => `${n} ${n === 1 ? 'page' : 'pages'}`
+const count = (n: number) => `${n} ${n === 1 ? 'item' : 'items'}`
 
 /** Sits where a page's trail and star would: how many pages are in the trash
  *  on the left, and the button to empty it on the right, in the star's pale
