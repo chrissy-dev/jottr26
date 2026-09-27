@@ -2,12 +2,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { auth, type AuthSession } from '@/lib/auth'
-import { supabaseClient } from '@/lib/supabase/client'
 import { closeDatabase, eraseDatabase, openDatabase } from '@/lib/db/dexie'
 import { moveSearchTexts } from '@/lib/db/searchText'
 import { releaseAll } from '@/lib/db/ydoc'
 import { SyncEngine } from '@/lib/sync/engine'
-import { SupabaseBackend } from '@/lib/sync/supabase'
+import { syncBackend } from '@/lib/sync'
 import { initialStatus, type SyncStatus } from '@/lib/sync/types'
 
 /** What rarely changes: who is signed in, and the actions. Kept apart from the
@@ -93,7 +92,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
 
     const db = openDatabase(userId)
-    const engine = new SyncEngine(new SupabaseBackend(supabaseClient(), userId), userId)
+    const engine = new SyncEngine(syncBackend(userId), userId)
     engineRef.current = engine
     // subscribe() hands over the current status straight away, so this is
     // also the signal that the database is open for this account.

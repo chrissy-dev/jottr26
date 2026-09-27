@@ -14,7 +14,14 @@ export interface EmailCodeSignIn {
   verifyCode(email: string, code: string): Promise<string | null>
 }
 
-export type SignIn = EmailCodeSignIn
+/** Sign in with a password the server was started with. */
+export interface PasswordSignIn {
+  kind: 'password'
+  /** Resolves with an error message, or null once signed in. */
+  submit(password: string): Promise<string | null>
+}
+
+export type SignIn = EmailCodeSignIn | PasswordSignIn
 
 /** Where sessions come from. The workspace opens from `storedSession` alone,
  *  so the installed app can show your notes with no network at all. */

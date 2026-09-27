@@ -4,22 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { SetupNotice } from "@/components/SetupNotice";
 import { auth } from "@/lib/auth";
+import type { EmailCodeSignIn, PasswordSignIn } from "@/lib/auth/types";
 
 type Stage = "email" | "code";
 
 export default function LoginPage() {
   if (!auth.configured) return <SetupNotice />;
-  return <SignIn />;
+  if (auth.signIn.kind === "password") return <PasswordForm signIn={auth.signIn} />;
+  return <SignIn signIn={auth.signIn} />;
 }
 
-function SignIn() {
-  const [stage, setStage] = useState<Stage>("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/** True until we know there is no session. With one, straight to the notes. */
+function useCheckingSession() {
   const [checking, setChecking] = useState(true);
-  const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void auth.getSession().then((session) => {
@@ -27,6 +24,86 @@ function SignIn() {
       else setChecking(false);
     });
   }, []);
+
+  return checking;
+}
+
+function Checking() {
+  return (
+    <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-surface">
+      <Icon name="refresh" size={18} className="animate-spin text-faint" />
+    </main>
+  );
+}
+
+/** For a self-hosted server started with a password. */
+function PasswordForm({ signIn }: { signIn: PasswordSignIn }) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const checking = useCheckingSession();
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    const submitError = await signIn.submit(password);
+    if (submitError) {
+      setBusy(false);
+      setError(submitError);
+      return;
+    }
+    window.location.replace("/app");
+  };
+
+  if (checking) return <Checking />;
+
+  return (
+    <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-sunken px-5">
+      <div className="w-full max-w-[26rem]">
+        <div className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-soft)]">
+          <form onSubmit={submit}>
+            <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">
+              Sign into Jottr
+            </h1>
+            <p className="mt-1.5 leading-relaxed text-muted">
+              Enter the password this server was set up with.
+            </p>
+
+            <label
+              htmlFor="password"
+              className="mt-5 block text-[12.5px] font-medium text-muted pointer-coarse:text-[14px]"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              autoFocus
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)]"
+            />
+
+            <Submit busy={busy} label="Sign in" icon="check" />
+            {error && <ErrorNote>{error}</ErrorNote>}
+          </form>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function SignIn({ signIn }: { signIn: EmailCodeSignIn }) {
+  const [stage, setStage] = useState<Stage>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const checking = useCheckingSession();
+  const codeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (stage === "code") codeRef.current?.focus();
@@ -36,7 +113,7 @@ function SignIn() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const sendError = await auth.signIn.sendCode(email.trim());
+    const sendError = await signIn.sendCode(email.trim());
     setBusy(false);
     if (sendError) setError(sendError);
     else setStage("code");
@@ -46,7 +123,7 @@ function SignIn() {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    const verifyError = await auth.signIn.verifyCode(email.trim(), code.trim());
+    const verifyError = await signIn.verifyCode(email.trim(), code.trim());
     if (verifyError) {
       setBusy(false);
       setError(verifyError);
@@ -55,13 +132,7 @@ function SignIn() {
     window.location.replace("/app");
   };
 
-  if (checking) {
-    return (
-      <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-surface">
-        <Icon name="refresh" size={18} className="animate-spin text-faint" />
-      </main>
-    );
-  }
+  if (checking) return <Checking />;
 
   return (
     <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-sunken px-5">

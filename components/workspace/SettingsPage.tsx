@@ -33,7 +33,7 @@ export function SettingsPage() {
       <SectionLabel>Account</SectionLabel>
       <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)] text-ink">
         <Icon name="user" size={15} className="shrink-0 text-faint" />
-        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{session?.user.email}</span>
+        <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{session?.user.email ?? window.location.host}</span>
         <button
           type="button"
           onClick={() => {

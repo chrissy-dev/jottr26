@@ -3,7 +3,7 @@ import { Hono, type Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { streamSSE } from 'hono/streaming'
 import type { PageUpsert } from '../../lib/sync/backend.ts'
-import type { Store } from './store.ts'
+import { PAGE_SIZE, type Store } from './store.ts'
 
 /** How someone proves who they are.
  *  - none: everyone who can reach the server is the owner. For localhost, or
@@ -105,7 +105,10 @@ export function createApp({ store, auth, password }: AppOptions) {
     await next()
   })
 
-  api.get('/pages', (c) => c.json({ rows: store.pagesSince(c.get('userId'), range(c)) }))
+  api.get('/pages', (c) => {
+    const { from, limit } = range(c)
+    return c.json({ rows: store.pagesSince(c.get('userId'), from, limit) })
+  })
 
   api.get('/pages/live', (c) => c.json({ ids: store.livePageIds(c.get('userId')) }))
 
@@ -122,7 +125,10 @@ export function createApp({ store, auth, password }: AppOptions) {
     return c.json({})
   })
 
-  api.get('/docs', (c) => c.json({ rows: store.docVersionsSince(c.get('userId'), range(c)) }))
+  api.get('/docs', (c) => {
+    const { from, limit } = range(c)
+    return c.json({ rows: store.docVersionsSince(c.get('userId'), from, limit) })
+  })
 
   api.post('/docs/fetch', async (c) => {
     const { ids } = (await c.req.json()) as { ids: string[] }
@@ -161,9 +167,12 @@ export function createApp({ store, auth, password }: AppOptions) {
   return app
 }
 
+/** Where a pull starts, and how many rows it wants: at most PAGE_SIZE. */
 function range(c: Context<Env>) {
   const after = c.req.query('after')
-  return after !== undefined ? { after } : { since: c.req.query('since') ?? '' }
+  const from = after !== undefined ? { after } : { since: c.req.query('since') ?? '' }
+  const limit = Math.min(Number(c.req.query('limit')) || PAGE_SIZE, PAGE_SIZE)
+  return { from, limit }
 }
 
 /** Direct, or through a proxy that says so. */
