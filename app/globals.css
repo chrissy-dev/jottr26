@@ -18,13 +18,13 @@
   /* The darkest any text goes, in the notes and the UI alike: a soft
      near-black rather than a harder ink. */
   --text: #2c2c2c;
-  --text-muted: #6f6e6a;
-  --text-faint: #a3a29d;
-  /* The sidebar's own greys: its text and icons one softer ink, and the
-     pale bits (Add new, headings, row buttons) a lighter grey. */
-  --sidebar-text: #5f5e58;
-  --sidebar-text-muted: #5f5e58;
-  --sidebar-text-faint: #91918d;
+  --text-muted: #5f5e58;
+  --text-faint: #91918d;
+  /* The sidebar's text and icons take the muted grey rather than the full
+     ink, so the list sits quieter than the page. */
+  --sidebar-text: var(--text-muted);
+  --sidebar-text-muted: var(--text-muted);
+  --sidebar-text-faint: var(--text-faint);
 
   --line: #e9e8e4;
   --line-strong: #dcdbd6;

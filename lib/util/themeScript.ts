@@ -6,7 +6,7 @@ export const THEME_KEY = 'jottr.theme'
 export const THEME_EVENT = 'jottr:theme'
 
 /** The page's own colour in each, for the browser's bar around it. */
-export const THEME_COLORS = { light: '#fcfbf7', dark: '#1f1f1d' }
+export const THEME_COLORS = { light: '#ffffff', dark: '#1f1f1d' }
 
 /** Runs in the head, before the first paint, so a page never flashes the
  *  wrong colours on its way in. It resolves the choice to `data-theme` on the
