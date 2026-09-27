@@ -661,14 +661,6 @@ h1.page-title {
 .ProseMirror li > div[data-type="accordion"]:has(> .accordion-content > div[data-type="accordionTitle"][data-title="true"]) > .accordion-toggle {
   margin-top: calc((var(--list-leading) * var(--title-scale) * 1em - 20px) / 2);
 }
-/* A box inside another box shares its shade, so it takes a faint rule round
-   its edge to stand out from the one it sits in. Drawn as an inset shadow so
-   it costs no layout. */
-.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"])
-  :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box) {
-  box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow-subtle);
-}
-
 .ProseMirror code {
   font-family: var(--font-mono);
   font-size: 0.875em;
