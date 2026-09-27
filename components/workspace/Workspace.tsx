@@ -38,7 +38,7 @@ const Editor = dynamic(() => loadEditor().then((m) => m.Editor), {
 })
 
 // The gap between the wide sidebar and the window's edges, on every side.
-const SIDEBAR_INSET = 5
+const SIDEBAR_INSET = 10
 
 export function Workspace() {
   const { userId } = useWorkspace()
@@ -151,14 +151,16 @@ export function Workspace() {
         {wide && sidebarOpen && (
           <div className="relative z-40 w-0 shrink-0">
             <div
-              className="group absolute inset-y-0 -left-[5px] w-2 cursor-col-resize touch-none"
+              className="group absolute inset-y-0 cursor-col-resize touch-none"
+              style={{ left: -SIDEBAR_INSET, width: SIDEBAR_INSET + 3 }}
               onPointerDown={startResize}
               onLostPointerCapture={() => endResize()}
             >
               <div
-                className={`absolute inset-y-[5px] left-[1.5px] w-0.5 bg-accent transition-opacity ${
+                className={`absolute w-0.5 bg-accent transition-opacity ${
                   dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                 }`}
+                style={{ top: SIDEBAR_INSET, bottom: SIDEBAR_INSET, left: SIDEBAR_INSET / 2 - 1 }}
               />
             </div>
           </div>
