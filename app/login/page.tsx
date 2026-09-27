@@ -69,29 +69,29 @@ function SignIn() {
 
   if (checking) {
     return (
-      <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-surface">
-        <Icon name="refresh" size={18} className="animate-spin text-faint" />
+      <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-sunken">
+        <Icon name="refresh" size={16} className="animate-spin text-muted" />
       </main>
     );
   }
 
   return (
     <main className="fixed inset-0 grid place-items-center overflow-hidden overscroll-none bg-sunken px-5">
-      <div className="w-full max-w-[26rem]">
-        <div className="rounded-2xl border border-line bg-surface p-6 shadow-[var(--shadow-soft)]">
+      <div className="w-full max-w-[360px]">
+        <div className="rounded-xl border border-line bg-raised p-5 shadow-[var(--shadow-subtle)]">
           {stage === "email" ? (
             <form onSubmit={sendCode}>
-              <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">
+              <h1 className="text-[length:var(--body-size)] font-semibold text-ink">
                 Sign into Jottr
               </h1>
-              <p className="mt-1.5 leading-relaxed text-muted">
+              <p className="mt-1 leading-relaxed text-muted">
                 Enter your email address below to sign in. This will create an account if you
                 don&apos;t already have one.
               </p>
 
               <label
                 htmlFor="email"
-                className="mt-5 block text-[12.5px] font-medium text-muted pointer-coarse:text-[14px]"
+                className="mt-4 block text-[12.5px] font-medium text-muted pointer-coarse:text-[13.5px]"
               >
                 Email address
               </label>
@@ -105,7 +105,7 @@ function SignIn() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
-                className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)]"
+                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-1.5 leading-snug text-[length:var(--body-size)] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2"
               />
 
               <Submit busy={busy} label="Send me a sign in code" icon="mail" />
@@ -113,10 +113,10 @@ function SignIn() {
             </form>
           ) : (
             <form onSubmit={verify}>
-              <h1 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">
+              <h1 className="text-[length:var(--body-size)] font-semibold text-ink">
                 Check your email
               </h1>
-              <p className="mt-1.5 leading-relaxed text-muted">
+              <p className="mt-1 leading-relaxed text-muted">
                 A sign in code has been sent to{" "}
                 <span className="font-medium text-ink">{email}</span>. Enter it below or click the
                 link in the email to sign in directly.
@@ -124,7 +124,7 @@ function SignIn() {
 
               <label
                 htmlFor="code"
-                className="mt-5 block text-[12.5px] font-medium text-muted pointer-coarse:text-[14px]"
+                className="mt-4 block text-[12.5px] font-medium text-muted pointer-coarse:text-[13.5px]"
               >
                 Six-digit code
               </label>
@@ -139,7 +139,7 @@ function SignIn() {
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
                 placeholder="000000"
-                className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-center text-[20px] font-medium tracking-[0.35em] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)]"
+                className="mt-1 w-full rounded-lg border border-line bg-transparent px-3 py-1.5 leading-snug text-center text-[length:var(--body-size)] font-medium tracking-[0.35em] outline-none transition-colors placeholder:text-faint focus:border-[var(--accent)] pointer-coarse:py-2"
               />
 
               <Submit busy={busy} label="Sign in" icon="check" />
@@ -152,9 +152,9 @@ function SignIn() {
                   setCode("");
                   setError(null);
                 }}
-                className="mt-3 flex items-center gap-1.5 text-[12.5px] font-medium text-muted transition-colors hover:text-ink"
+                className="-ml-2 mt-2 flex items-center gap-1.5 rounded-md px-2 py-1 text-[13px] font-medium text-muted transition-colors hover:bg-[var(--hover)] hover:text-ink pointer-coarse:py-2 pointer-coarse:text-[14px]"
               >
-                <Icon name="arrowLeft" size={13} />
+                <Icon name="arrowLeft" size={14} />
                 Use a different email
               </button>
             </form>
@@ -170,12 +170,12 @@ function Submit({ busy, label, icon }: { busy: boolean; label: string; icon: "ma
     <button
       type="submit"
       disabled={busy}
-      className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60"
+      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 pointer-coarse:py-2"
     >
       {busy ? (
-        <Icon name="refresh" size={15} className="animate-spin" />
+        <Icon name="refresh" size={14} className="animate-spin" />
       ) : (
-        <Icon name={icon} size={15} />
+        <Icon name={icon} size={14} />
       )}
       {busy ? "Working…" : label}
     </button>
@@ -186,7 +186,7 @@ function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="mt-3 flex items-start gap-1.5 text-[12.5px] leading-relaxed text-danger"
+      className="mt-3 flex items-start gap-1.5 text-[12.5px] leading-relaxed text-danger pointer-coarse:text-[13.5px]"
     >
       <Icon name="alert" size={13} className="mt-0.5" />
       <span>{children}</span>
