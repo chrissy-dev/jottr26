@@ -8,7 +8,6 @@ import { Breadcrumb } from './Breadcrumb'
 import { EditorError } from './EditorError'
 import { EmptyState } from './EmptyState'
 import { EnsureFirstPage } from './EnsureFirstPage'
-import { LastUpdated } from './LastUpdated'
 import { PagesContext } from './PagesContext'
 import { SettingsBar, SettingsPage } from './SettingsPage'
 import { Sidebar } from './Sidebar'
@@ -185,8 +184,6 @@ export function Workspace() {
               </button>
             )}
           </div>
-
-          {page && <LastUpdated page={page} />}
 
           {(page || view) && !trashEmpty ? (
             <div className="scrollbar-none relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
