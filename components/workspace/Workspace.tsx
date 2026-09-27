@@ -179,16 +179,18 @@ export function Workspace() {
               {/* The trail and the star are part of the page: they start level
                   with the sidebar button, the trail just past it, but scroll
                   away with the text rather than floating over it, so they need
-                  no backdrop. On a wide screen the trail only steps aside while
-                  the button is there. */}
+                  no backdrop. The star keeps a pale box of its own, and on a wide
+                  screen that box sits as far in from the edge as the trail's text.
+                  On a wide screen the trail only steps aside while the button is
+                  there. */}
               {page && (
                 <div
-                  className={`float-top pointer-events-none absolute left-2 right-2 z-10 flex min-w-0 items-center gap-2 ${
+                  className={`float-top pointer-events-none absolute left-2 z-10 flex min-w-0 items-center gap-2 ${wide ? 'right-4' : 'right-2'} ${
                     wide && sidebarOpen ? 'pl-2' : 'pl-10 pointer-coarse:pl-12'
                   }`}
                 >
                   {trail.length > 1 && <Breadcrumb trail={trail} onOpen={openPage} truncate={wide} />}
-                  <StarButton page={page} className="ml-auto rounded-md" />
+                  <StarButton page={page} className="ml-auto rounded-md bg-sunken" />
                 </div>
               )}
               {/* 700px of text, the same column Notion sets, plus the side padding:
