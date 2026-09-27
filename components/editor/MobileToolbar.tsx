@@ -113,9 +113,16 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
   // shows below the line. Only a caret just behind the bar is nudged: one
   // that is further off was scrolled away from on purpose. The bar growing
   // counts too, which is the block menu opening over the line.
+  //
+  // The browser's own part comes in steps as the keyboard opens: the visual
+  // viewport shrinks, then pans up to the caret, and sometimes the page
+  // scrolls itself instead, which fires neither. Each step is checked, with
+  // one more look once the keyboard has settled.
   useEffect(() => {
     if (!visible) return
     let frame = 0
+    let settle = 0
+    let lastHeight = window.visualViewport?.height ?? window.innerHeight
     // Looked up once: finding it reads the computed style of every ancestor.
     const scroller = scrollParent(editor.view.dom)
 
@@ -128,7 +135,12 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
       } catch {
         return
       }
-      const { top, bottom } = bar.getBoundingClientRect()
+      // Where the bar comes to rest, not where it is drawn: while it rises
+      // in with the keyboard it is drawn up to its own height lower, which
+      // would leave the line under it once it arrives.
+      const viewport = window.visualViewport
+      const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight
+      const top = bottom - bar.offsetHeight
       const overlap = caret.bottom - (top - 40)
       if (overlap <= 0 || caret.bottom > bottom + 200) return
       scroller?.scrollBy({ top: overlap })
@@ -139,17 +151,30 @@ export function MobileToolbar({ editor, pageId }: { editor: Editor; pageId: stri
       frame = requestAnimationFrame(keepCaretClear)
     }
 
+    const resized = () => {
+      schedule()
+      const height = window.visualViewport?.height ?? window.innerHeight
+      if (height < lastHeight) {
+        clearTimeout(settle)
+        settle = window.setTimeout(schedule, 350)
+      }
+      lastHeight = height
+    }
+
     editor.on('selectionUpdate', schedule)
     editor.on('update', schedule)
-    window.visualViewport?.addEventListener('resize', schedule)
+    window.visualViewport?.addEventListener('resize', resized)
+    window.visualViewport?.addEventListener('scroll', schedule)
     const observer = new ResizeObserver(schedule)
     if (barRef.current) observer.observe(barRef.current)
     return () => {
       cancelAnimationFrame(frame)
+      clearTimeout(settle)
       observer.disconnect()
       editor.off('selectionUpdate', schedule)
       editor.off('update', schedule)
-      window.visualViewport?.removeEventListener('resize', schedule)
+      window.visualViewport?.removeEventListener('resize', resized)
+      window.visualViewport?.removeEventListener('scroll', schedule)
     }
   }, [visible, editor])
 
