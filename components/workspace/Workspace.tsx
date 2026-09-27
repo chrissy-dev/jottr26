@@ -171,16 +171,15 @@ export function Workspace() {
               the page rather than scrolling away with it. The row itself lets
               clicks through to the page; only what is drawn in it takes them. */}
           <div className="float-top pointer-events-none absolute left-2 right-12 z-30 flex min-w-0 items-center gap-2 pointer-coarse:right-14">
-            {/* It keeps the old top bar's backdrop: on a phone the page's left
-                edge passes underneath. There it is always on screen, so it gets
-                an outline rather than being a bare icon that looks like part of
-                the text. */}
+            {/* The same pale box and shadow as the star, so the page's left
+                edge can pass underneath on a phone without the icon looking
+                like part of the text. */}
             {!sidebarOpen && (
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Show sidebar"
-                className="float-backdrop pointer-events-auto grid size-8 shrink-0 place-items-center text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:size-10 pointer-coarse:text-muted"
+                className="pointer-events-auto grid rounded-md bg-sunken shadow-[var(--shadow-subtle)] size-8 shrink-0 place-items-center text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:size-10 pointer-coarse:text-muted"
               >
                 <Icon name="panel" size={18} className="pointer-coarse:size-5" />
               </button>

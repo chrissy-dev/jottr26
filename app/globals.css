@@ -237,12 +237,6 @@ body {
   }
 }
 
-/* Their backdrop, for the page scrolling underneath: frosted, and on a touch
-   screen, where they are always showing, outlined as well. */
-@utility float-backdrop {
-  @apply rounded-md bg-surface/85 backdrop-blur-md pointer-coarse:rounded-lg pointer-coarse:border pointer-coarse:border-line pointer-coarse:bg-raised/90;
-}
-
 /* ---------------------------------------------------------------------------
    Editor
    --------------------------------------------------------------------------- */
