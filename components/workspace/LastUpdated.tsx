@@ -29,13 +29,17 @@ function describeEdit(at: number, now: number) {
  *  where the corner belongs to the page and the keyboard bar. Ticks every half minute so
  *  "just now" doesn't stay just now. */
 export function LastUpdated({ page }: { page: PageRow }) {
-  const at = lastTouched(page, useEditedAt(page.id))
+  const edited = useEditedAt(page.id)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30_000)
     return () => clearInterval(timer)
   }, [])
 
+  // Nothing until the edit time is read, rather than the row's older date
+  // for a moment before it.
+  if (edited === undefined) return null
+  const at = lastTouched(page, edited ?? undefined)
   if (!at) return null
   return (
     <p

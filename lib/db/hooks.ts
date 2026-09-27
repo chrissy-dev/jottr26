@@ -122,14 +122,15 @@ export function useDrawnRows(pages: PageRow[]): PageRow[] {
   return drawn
 }
 
-/** When this device last typed in the page, or undefined if it never has.
- *  A query of its own, so typing wakes only what shows this. */
-export function useEditedAt(pageId: string): number | undefined {
+/** When this device last typed in the page, null if it never has, and
+ *  undefined until that is known. A query of its own, so typing wakes only
+ *  what shows this. */
+export function useEditedAt(pageId: string): number | null | undefined {
   return useLiveQuery(async () => {
     const db = activeDatabase()
     if (!db) return undefined
     const row = await db.meta.get(editedKey(pageId))
-    return row ? Number(row.value) : undefined
+    return row ? Number(row.value) : null
   }, [pageId])
 }
 

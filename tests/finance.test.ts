@@ -258,6 +258,9 @@ describe('finance mode', () => {
     state = state.apply(state.tr.setNodeMarkup(start - 1, null, { ...node.attrs, finance: false }))
     same(state, 'switching finance mode off')
 
+    state = state.apply(state.tr.replaceWith(0, state.doc.content.size, state.doc.content))
+    same(state, 'the whole page replaced, as an edit from another device arrives')
+
     const { node: table, start: at } = locate(state)
     state = state.apply(state.tr.delete(at - 1, at - 1 + table.nodeSize))
     same(state, 'deleting a table')
