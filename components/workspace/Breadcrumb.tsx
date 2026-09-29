@@ -1,27 +1,36 @@
 'use client'
 
-import { useLayoutEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
+import { useScrollFade } from '@/components/editor/useScrollFade'
 import { Icon } from '@/components/ui/Icon'
 import type { PageRow } from '@/lib/db/schema'
 
 /** The ancestors, then the page itself as plain unclickable text to close
  *  the trail. Most pages are top level and get no trail at all. The crumbs
- *  are plain text, and hovering underlines one the way a link would. When
- *  the trail floats, the box round it is the floating buttons' backdrop,
- *  there so the page can scroll under the trail without the two reading as
- *  one. On a narrow screen a deep trail won't fit, so rather than cutting the
- *  titles short it scrolls sideways, starting at the right-hand end with the
- *  open page, and the reader swipes back for the rest. */
+ *  are plain text, and hovering underlines one the way a link would. On a
+ *  wide screen a deep trail cuts the titles short. On a narrow screen it
+ *  won't fit either, so rather than cutting the titles short it scrolls
+ *  sideways, starting at the right-hand end with the open page, and the
+ *  reader swipes back for the rest, its ends fading out as the mobile
+ *  toolbar's do while there is more past them. */
 export function Breadcrumb({
   trail,
   onOpen,
-  floating = false,
+  truncate = false,
 }: {
   trail: PageRow[]
   onOpen: (id: string | null) => void
-  floating?: boolean
+  truncate?: boolean
 }) {
-  const navRef = useRef<HTMLElement>(null)
+  const navRef = useRef<HTMLElement | null>(null)
+  const fade = useScrollFade()
+  const setNav = useCallback(
+    (nav: HTMLElement | null) => {
+      navRef.current = nav
+      fade(nav)
+    },
+    [fade],
+  )
   // Keyed on the titles as well as the ids, so renaming a page, which changes
   // how wide the trail is, puts the open page back in view.
   const trailKey = trail.map((crumb) => `${crumb.id}:${crumb.title}`).join('/')
@@ -31,7 +40,7 @@ export function Breadcrumb({
   // swiping along it.
   useLayoutEffect(() => {
     const nav = navRef.current
-    if (floating || !nav) return
+    if (truncate || !nav) return
     const pin = () => {
       nav.scrollLeft = nav.scrollWidth
     }
@@ -39,33 +48,33 @@ export function Breadcrumb({
     const observer = new ResizeObserver(pin)
     observer.observe(nav)
     return () => observer.disconnect()
-  }, [floating, trailKey])
+  }, [truncate, trailKey])
 
   return (
     <nav
-      ref={navRef}
+      ref={setNav}
       aria-label="Breadcrumb"
       className={`pointer-events-auto flex h-8 min-w-0 items-center gap-1.5 pointer-coarse:h-10 ${
-        floating
-          ? 'float-backdrop overflow-hidden px-2'
-          : 'overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+        truncate
+          ? 'overflow-hidden'
+          : 'scroll-fade overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       }`}
     >
       {trail.map((crumb, index) => (
         <span
           key={crumb.id}
-          className={`flex items-center gap-1.5 ${floating ? 'min-w-0' : 'shrink-0 whitespace-nowrap'}`}
+          className={`flex items-center gap-1.5 ${truncate ? 'min-w-0' : 'shrink-0 whitespace-nowrap'}`}
         >
           {index > 0 && <Icon name="chevronRight" size={12} className="text-faint" />}
           {index === trail.length - 1 ? (
-            <span aria-current="page" className={`text-faint ${floating ? 'truncate' : ''}`}>
+            <span aria-current="page" className={`text-faint ${truncate ? 'truncate' : ''}`}>
               {crumb.title || 'Untitled'}
             </span>
           ) : (
             <button
               type="button"
               onClick={() => onOpen(crumb.id)}
-              className={`text-muted underline-offset-2 hover:underline ${floating ? 'truncate' : ''}`}
+              className={`text-muted underline-offset-2 hover:underline ${truncate ? 'truncate' : ''}`}
             >
               {crumb.title || 'Untitled'}
             </button>

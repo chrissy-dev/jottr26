@@ -287,6 +287,34 @@ describe('local-first sync', () => {
     assert.equal(writes, 0)
   })
 
+  it('does not write a pushed row back on the pull after it', async () => {
+    await laptop.focus()
+    const id = await createPage()
+    await laptop.setTitle(id, 'Starred')
+    await laptop.sync()
+    await laptop.sync()
+
+    // A change to the row alone: no document goes with it to stamp it again.
+    await toggleFavorite(id)
+    await laptop.sync()
+
+    const db = activeDatabase()!
+    let writes = 0
+    const count = () => {
+      writes += 1
+    }
+    db.pages.hook('updating', count)
+    db.pages.hook('creating', count)
+    try {
+      await laptop.engine.syncOnce()
+    } finally {
+      db.pages.hook('updating').unsubscribe(count)
+      db.pages.hook('creating').unsubscribe(count)
+    }
+    assert.equal(writes, 0)
+    assert.equal((await laptop.page(id))?.isFavorite, 1)
+  })
+
   it('reports a typed-but-unsynced page as pending rather than synced', async () => {
     await laptop.focus()
     const id = await createPage()
@@ -640,6 +668,32 @@ describe('local-first sync', () => {
       const internals = phone.engine as unknown as { retryTimer: ReturnType<typeof setTimeout> | null }
       if (internals.retryTimer) clearTimeout(internals.retryTimer)
     }
+  })
+
+  it('keeps a page and its unpushed edits when the session lapses just before its document is pushed', async () => {
+    await laptop.focus()
+    const id = await createPage()
+    await laptop.setTitle(id, 'Kept')
+    await laptop.sync()
+    await phone.sync()
+
+    await phone.type(id, 'typed before the session lapsed')
+
+    // The cycle checked its session at the start; it lapses by the time the
+    // document goes out, so the push is answered as the anon user.
+    server.sessionLost = true
+    try {
+      await phone.pushWithoutPulling()
+    } finally {
+      server.sessionLost = false
+    }
+
+    assert.ok(await phone.page(id), 'a page the server still has must survive')
+    assert.equal(await phone.pendingCount(), 1, 'its edit must still be waiting to go')
+
+    await phone.sync()
+    await laptop.sync()
+    assert.match(await laptop.text(id), /typed before the session lapsed/)
   })
 
   it('leaves nothing running when stopped while still starting', async () => {

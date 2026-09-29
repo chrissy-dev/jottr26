@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { activeDatabase } from './dexie'
 import { bySortKey, liveChildren } from './pages'
@@ -62,17 +62,36 @@ export function useGrandchildPages(parentId: string, enabled: boolean): TreeNode
  *  the server does not, and letting the editor fill in an empty document would
  *  give the page two titles once the real one merged in — so it waits. */
 export function useDocReady(pageId: string): boolean | undefined {
+  // Once there, a document never leaves, so its state row — rewritten on every
+  // keystroke — stops being read, and typing stops waking this query.
+  const arrived = useRef<string | null>(null)
   return useLiveQuery(async () => {
     const db = activeDatabase()
     if (!db) return undefined
-    const [page, state] = await Promise.all([db.pages.get(pageId), db.docStates.get(pageId)])
+    const page = await db.pages.get(pageId)
     if (!page) return undefined
-    return page.origin === 'local' || (state?.version ?? 0) > 0
+    if (page.origin === 'local' || arrived.current === pageId) return true
+    const state = await db.docStates.get(pageId)
+    if ((state?.version ?? 0) === 0) return false
+    arrived.current = pageId
+    return true
   }, [pageId])
 }
 
-/** Written on every pause in typing, and drawn nowhere in the sidebar. */
-const UNDRAWN = new Set<string>(['searchText', 'editedAt'])
+/** Drawn nowhere in the sidebar. Search text and edit time were written on
+ *  every pause in typing by older builds, and can still arrive on rows they
+ *  wrote. The rest is sync's bookkeeping, which moves on every push and on the
+ *  pull after it without anything the sidebar shows changing. */
+const UNDRAWN = new Set<string>([
+  'searchText',
+  'editedAt',
+  'updatedAt',
+  'serverUpdatedAt',
+  'dirty',
+  'dirtyFields',
+  'createdAt',
+  'origin',
+])
 
 function sameForSidebar(a: PageRow, b: PageRow) {
   const left = a as unknown as Record<string, unknown>
@@ -90,13 +109,14 @@ function sameForSidebar(a: PageRow, b: PageRow) {
   return true
 }
 
-/** The page list with last time's rows kept wherever only the search text or
- *  edit time moved on, and last time's list itself when that is all that did.
+/** The page list with last time's rows kept wherever only undrawn fields
+ *  moved on, and last time's list itself when that is all that did.
  *
- *  Typing rewrites the open page's row every few hundred milliseconds, and the
- *  live query hands back every row new each time. Passed straight on, the
- *  whole sidebar tree would be rebuilt and redrawn with every pause. The rows
- *  kept here carry stale search text, so they are for drawing only. */
+ *  Every push, and the pull that follows it, rewrites a row's sync
+ *  bookkeeping, and the live query hands back every row new each time. Passed
+ *  straight on, the whole sidebar tree would be rebuilt and redrawn for each.
+ *  The rows kept here can carry stale undrawn fields, so they are for drawing
+ *  only; anything that acts on a page reads it again by id. */
 export function reuseRows(previous: readonly PageRow[], next: PageRow[]): PageRow[] {
   const before = new Map(previous.map((page) => [page.id, page]))
   let changed = previous.length !== next.length

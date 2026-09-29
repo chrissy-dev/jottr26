@@ -31,8 +31,8 @@ export function Sidebar({
   const expanded = useExpanded()
   const expandedFavourites = useExpandedFavourites()
 
-  // Typing changes only rows' search text and edit time, which the sidebar
-  // doesn't draw; kept rows mean the tree isn't rebuilt or redrawn for it.
+  // Sync rewrites rows' bookkeeping, which the sidebar doesn't draw; kept rows
+  // mean the tree isn't rebuilt or redrawn for it.
   const rows = useDrawnRows(pages)
   const tree: TreeNode[] = useMemo(() => buildTree(rows), [rows])
   // Each favourite with its subpages, taken from the tree so they read the
@@ -63,12 +63,9 @@ export function Sidebar({
           if (event.clientX - bounds.left >= event.currentTarget.clientWidth) return
           onOpen(null)
         }}
-        className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-[max(0.5rem,env(safe-area-inset-top))]"
+        className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-[max(0.5rem,env(safe-area-inset-top))]"
       >
-        <div className="flex items-start justify-between">
-          <SectionLabel>Pages</SectionLabel>
-          <Logo />
-        </div>
+        <SectionLabel>Pages</SectionLabel>
         {tree.length === 0 ? (
           <p className="px-2 py-2 leading-relaxed text-faint">
             No pages yet. Create one to get started.
@@ -104,7 +101,7 @@ export function Sidebar({
         )}
       </nav>
 
-      <footer className="border-t border-line px-3 pt-[13px] pb-[max(13px,env(safe-area-inset-bottom))]">
+      <footer className="flex flex-col border-t border-line px-3 pt-[13px] pb-[max(13px,env(safe-area-inset-bottom))]">
         <SidebarAction
           icon="settings"
           label="Settings"
@@ -129,27 +126,13 @@ function AddPage({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       // Lines up with the pages above it, the plus sitting where each page's
       // icon sits.
-      className="my-[1.5px] flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:py-2"
+      className="my-px flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-faint transition-colors hover:bg-[var(--hover)] hover:text-muted pointer-coarse:py-2"
     >
       <span className="grid size-5 shrink-0 place-items-center pointer-coarse:size-6">
         <Icon name="plus" size={15} strokeWidth={2} />
       </span>
       <span className="flex-1 text-left">Add new</span>
     </button>
-  )
-}
-
-/** The app icon's J, without its tile, so it takes the sidebar's colours. */
-function Logo() {
-  return (
-    <svg
-      viewBox="168 71 130 358"
-      aria-hidden
-      className="mr-2 mt-3 h-[18px] w-auto text-muted pointer-coarse:h-5"
-      fill="currentColor"
-    >
-      <path d="M204.5 80V75H293.5V359C293.5 385.333 288.167 403 277.5 412C266.833 420.667 250.667 425 229 425C207.667 425 188.667 421.833 172 415.5L173.5 411.5C189.5 417.833 206 421 223 421C234.333 421 241.833 416.167 245.5 406.5C249.5 396.833 251.5 381.167 251.5 359.5V80H204.5Z" />
-    </svg>
   )
 }
 
@@ -177,11 +160,15 @@ function SidebarAction({
       type="button"
       onClick={onClick}
       aria-current={current ? 'page' : undefined}
-      className={`my-[1.5px] flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-muted transition-colors pointer-coarse:py-2.5 ${
+      // Spaced as the page rows above are, the icon in the same slot. The
+      // footer is a column, so the margins add up to the rows' 2px gap.
+      className={`my-px flex w-full items-center gap-1.5 rounded-md py-1 pl-1.5 pr-1 text-muted transition-colors pointer-coarse:py-2 ${
         current ? 'bg-[var(--selected)]' : 'hover:bg-[var(--hover)]'
       }`}
     >
-      <Icon name={icon} size={16} className="text-faint" />
+      <span className="grid size-5 shrink-0 place-items-center pointer-coarse:size-6">
+        <Icon name={icon} size={15} className="text-muted" />
+      </span>
       <span className="flex-1 text-left">{label}</span>
     </button>
   )

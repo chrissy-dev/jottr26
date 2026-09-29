@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { getExtensionField, type KeyboardShortcutCommand } from '@tiptap/core'
+import { TextSelection } from '@tiptap/pm/state'
 import { headlessEditor } from './editor'
 
 const TIPTAP_OWN = new Set(['keymap', 'listKeymap'])
@@ -40,5 +41,24 @@ describe('keyboard shortcuts', () => {
 
     assert.ok(bindings > 3, 'several extensions bind Backspace')
     assert.equal(dispatched, 0)
+  })
+
+  it('take Backspace from the top of the body to the end of the title with Shift held, as iOS holds it there', () => {
+    const title = { type: 'title', content: [{ type: 'text', text: 'Notes' }] }
+    const line = { type: 'paragraph', content: [{ type: 'text', text: 'hello' }] }
+    const instance = headlessEditor({ type: 'doc', content: [title, line] }, 8)
+    const event = { key: 'Backspace', keyCode: 8, shiftKey: true, altKey: false, ctrlKey: false, metaKey: false }
+
+    // The key goes to each plugin in turn, in the order the view would hand
+    // it out, until one takes it. A headless editor only has them listed.
+    const view = { state: instance.state, dispatch: instance.view.dispatch }
+    const handled = instance.extensionManager.plugins.some((plugin) =>
+      plugin.props.handleKeyDown?.call(plugin, view as never, event as KeyboardEvent),
+    )
+
+    assert.ok(handled)
+    const { selection } = instance.state
+    assert.ok(selection instanceof TextSelection && selection.empty, 'a caret, not the title selected whole')
+    assert.equal(selection.head, 6)
   })
 })

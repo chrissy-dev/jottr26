@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon'
 import { activeDatabase } from '@/lib/db/dexie'
 import { searchPages, type SearchTexts } from '@/lib/db/search'
 import { readSearchTexts } from '@/lib/db/searchText'
+import { readEditedTimes, type EditedTimes } from '@/lib/db/editedAt'
 import { usePages } from '@/components/workspace/PagesContext'
 import { looksLikeUrl, normalizeHref, pageHref, resolveLink } from '@/lib/util/links'
 import { scrollIntoList } from '@/lib/util/scroll'
@@ -18,6 +19,7 @@ type Row =
 
 const LIMIT = 6
 const NO_TEXTS: SearchTexts = new Map()
+const NO_TIMES: EditedTimes = new Map()
 
 export function LinkPicker({
   initialHref,
@@ -38,6 +40,7 @@ export function LinkPicker({
   // Page text is read once, as the picker opens: searching titles needs
   // nothing more, and it arrives before anyone has typed much.
   const [texts, setTexts] = useState(NO_TEXTS)
+  const [edited, setEdited] = useState(NO_TIMES)
   const [query, setQuery] = useState(initialHref)
   const [index, setIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -59,9 +62,11 @@ export function LinkPicker({
     const db = activeDatabase()
     if (!db) return
     let cancelled = false
-    readSearchTexts(db).then(
-      (read) => {
-        if (!cancelled) setTexts(read)
+    Promise.all([readSearchTexts(db), readEditedTimes(db)]).then(
+      ([readTexts, readTimes]) => {
+        if (cancelled) return
+        setTexts(readTexts)
+        setEdited(readTimes)
       },
       () => {},
     )
@@ -79,7 +84,7 @@ export function LinkPicker({
   const rows = useMemo<Row[]>(() => {
     const value = query.trim()
     if (!value) return []
-    const found: Row[] = searchPages(pages, value, texts)
+    const found: Row[] = searchPages(pages, value, texts, edited)
       .slice(0, LIMIT)
       .map((hit) => ({
         kind: 'page',
@@ -89,7 +94,7 @@ export function LinkPicker({
       }))
     const url: Row = { kind: 'url', href: normalizeHref(value) }
     return looksLikeUrl(value) ? [url, ...found] : [...found, url]
-  }, [pages, query, texts])
+  }, [pages, query, texts, edited])
 
   const choose = (row: Row) => {
     if (row.kind === 'page') return onApply(pageHref(row.pageId))
@@ -151,7 +156,7 @@ export function LinkPicker({
       {rows.length > 0 && (
         <ul
           ref={listRef}
-          className="scroll-thin mt-1 max-h-56 overflow-y-auto border-t border-line pt-1"
+          className="scrollbar-none mt-1 max-h-56 overflow-y-auto border-t border-line pt-1"
         >
           {rows.map((row, i) => (
             <li key={row.kind === 'page' ? row.pageId : 'url'}>

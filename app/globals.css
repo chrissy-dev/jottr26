@@ -6,33 +6,35 @@
    step with whichever is showing.
    --------------------------------------------------------------------------- */
 :root {
-  /* Paper on a desk: the page is a faintly warm off-white, and the sidebar a
-     clear step darker, so the two panes read apart. Menus stay pure white,
-     lifted off the page. */
-  --surface: #fcfbf7;
-  --surface-sunken: #f7f6f2;
+  /* The page is pure white; the sidebar and the tinted blocks on the page
+     share one faintly warm off-white. Menus are white too, lifted off the
+     page by their shadow. */
+  --surface: #ffffff;
+  --surface-sunken: #f9f8f6;
   --surface-raised: #ffffff;
-  --sidebar: #f5f4ef;
+  --sidebar: #f9f8f6;
   --overlay: rgb(23 23 22 / 0.28);
 
   /* The darkest any text goes, in the notes and the UI alike: a soft
      near-black rather than a harder ink. */
   --text: #2c2c2c;
-  --text-muted: #6f6e6a;
-  --text-faint: #a3a29d;
-  /* The sidebar's greys, a step darker: on its deeper shade the page's own
-     read washed out. Still well short of the text itself. */
-  --sidebar-text-muted: #62615d;
-  --sidebar-text-faint: #8c8b86;
+  --text-muted: #5f5e58;
+  --text-faint: #91918d;
+  /* The sidebar's text and icons take the muted grey rather than the full
+     ink, so the list sits quieter than the page. */
+  --sidebar-text: var(--text-muted);
+  --sidebar-text-muted: var(--text-muted);
+  --sidebar-text-faint: var(--text-faint);
 
   --line: #e9e8e4;
   --line-strong: #dcdbd6;
 
-  --hover: rgb(23 23 22 / 0.045);
+  /* A hovered row and the open page's row share one shade. --active, which
+     marks pressed buttons and menu items, stays translucent so it still
+     reads as a step darker over a hovered row. */
+  --hover: #eeeded;
   --active: rgb(23 23 22 / 0.075);
-  /* The open page's row in the sidebar: lighter than --active, which also
-     marks pressed buttons and menu items, but still a step past hover. */
-  --selected: rgb(23 23 22 / 0.058);
+  --selected: #eeeded;
 
   /* Jottr's own ink: a muted indigo, bluer than violet, rather than the stock
      link blue. Kept dusty so it sits with the warm greys instead of shouting
@@ -50,6 +52,10 @@
 
   --shadow-soft: 0 1px 2px rgb(23 23 22 / 0.06), 0 4px 14px rgb(23 23 22 / 0.07);
   --shadow-pop: 0 2px 6px rgb(23 23 22 / 0.08), 0 12px 32px rgb(23 23 22 / 0.14);
+  /* Small and crisp: lifts a panel that sits on the page, like the sidebar,
+     off it. A tight drop below and a faint edge all round, both ending within
+     the gaps such panels sit in, so neither is cut off. */
+  --shadow-subtle: 0 1px 2px rgb(23 23 22 / 0.12), 0 0 1px rgb(23 23 22 / 0.16);
 
   color-scheme: light;
 }
@@ -71,6 +77,7 @@
   --text-muted: #a3a29c;
   --text-faint: #6a6964;
   /* A step lighter, as the light sidebar's are a step darker. */
+  --sidebar-text: #e3e2de;
   --sidebar-text-muted: #b0afa9;
   --sidebar-text-faint: #85847e;
 
@@ -93,6 +100,7 @@
 
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 14px rgb(0 0 0 / 0.3);
   --shadow-pop: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
+  --shadow-subtle: 0 1px 2px rgb(0 0 0 / 0.55), 0 0 1px rgb(0 0 0 / 0.6);
 
   color-scheme: dark;
 }
@@ -134,6 +142,9 @@
 .ProseMirror div[data-type="subpages"] {
   --text-muted: var(--sidebar-text-muted);
   --text-faint: var(--sidebar-text-faint);
+}
+.sidebar-tones {
+  --text: var(--sidebar-text);
 }
 
 html,
@@ -207,26 +218,13 @@ body {
   }
 }
 
-/* Thin, unobtrusive scrollbars that only show up when there is something to
-   scroll — the sidebar spends most of its life not needing them. */
-@supports (scrollbar-width: thin) {
-  .scroll-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
-  }
+/* No scrollbars anywhere: the page, the sidebar and the menus all still scroll
+   by wheel, trackpad, touch and keyboard, just without a bar showing. */
+.scrollbar-none {
+  scrollbar-width: none;
 }
-.scroll-thin::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-.scroll-thin::-webkit-scrollbar-thumb {
-  background: var(--line-strong);
-  border: 3px solid transparent;
-  background-clip: content-box;
-  border-radius: 999px;
-}
-.scroll-thin::-webkit-scrollbar-track {
-  background: transparent;
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* The buttons and trail that float over the top of the page: the line they
@@ -237,12 +235,6 @@ body {
   @media (pointer: coarse) {
     top: calc(max(0.5rem, env(safe-area-inset-top)) + 3.2px);
   }
-}
-
-/* Their backdrop, for the page scrolling underneath: frosted, and on a touch
-   screen, where they are always showing, outlined as well. */
-@utility float-backdrop {
-  @apply rounded-md bg-surface/85 backdrop-blur-md pointer-coarse:rounded-lg pointer-coarse:border pointer-coarse:border-line pointer-coarse:bg-raised/90;
 }
 
 /* ---------------------------------------------------------------------------
@@ -355,6 +347,12 @@ h1.page-title {
   padding: 20px 22px;
   margin: 8px 0;
 }
+/* The page's boxed blocks are lifted off it by the same small shadow as the
+   sidebar. The rules below that ring or edge a box keep it alongside theirs.
+   Not a table, whose border already draws its edge. */
+.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box, pre) {
+  box-shadow: var(--shadow-subtle);
+}
 .ProseMirror div[data-type="callout"] > :first-child {
   margin-top: 0;
 }
@@ -463,7 +461,7 @@ h1.page-title {
   flex-shrink: 0;
 }
 .ProseMirror div[data-type="subpages"] li > a {
-  color: var(--text);
+  color: var(--sidebar-text);
   font-weight: var(--body-weight);
   text-decoration: none;
 }
@@ -519,7 +517,7 @@ h1.page-title {
    instead, ready to be deleted or cut. Only while the editor has focus, like
    the selection tint below. */
 .ProseMirror-focused .ProseMirror-selectednode > div[data-type="subpages"] > .subpages-box {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 .ProseMirror div[data-type="subpages"] .subpages-empty {
   margin: 0;
@@ -664,14 +662,6 @@ h1.page-title {
 .ProseMirror li > div[data-type="accordion"]:has(> .accordion-content > div[data-type="accordionTitle"][data-title="true"]) > .accordion-toggle {
   margin-top: calc((var(--list-leading) * var(--title-scale) * 1em - 20px) / 2);
 }
-/* A box inside another box shares its shade, so it takes a faint rule round
-   its edge to stand out from the one it sits in. Drawn as an inset shadow so
-   it costs no layout. */
-.ProseMirror :is(div[data-type="callout"], div[data-type="accordionBody"])
-  :is(div[data-type="callout"], div[data-type="accordionBody"], div[data-type="subpages"] > .subpages-box) {
-  box-shadow: inset 0 0 0 1px var(--line-strong);
-}
-
 .ProseMirror code {
   font-family: var(--font-mono);
   font-size: 0.875em;
@@ -901,13 +891,13 @@ h1.page-title {
    is ringed instead, like a subpage list. Outranks the rule that rings a box
    inside another. */
 .ProseMirror.ProseMirror-focused :is(div[data-type="callout"].ProseMirror-selectednode, .ProseMirror-selectednode > .accordion-content > div[data-type="accordionBody"]) {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 /* A code block too, keeping its own shade and corners rather than the tint. */
 .ProseMirror.ProseMirror-focused pre.ProseMirror-selectednode {
   background: var(--surface-sunken);
   border-radius: 8px;
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), var(--shadow-subtle);
 }
 /* And a table with every cell selected, which is a table selected whole. The
    ring is drawn just inside its edge, as its wrapper scrolls and would clip
@@ -978,6 +968,18 @@ h1.page-title {
 
 .pop-in {
   animation: pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* A loading message that only shows once the wait is long enough to notice,
+   so what is usually there at once never flashes it first. */
+@keyframes appear-late {
+  from {
+    opacity: 0;
+  }
+}
+
+.appear-late {
+  animation: appear-late 200ms ease-out 400ms backwards;
 }
 
 /* The keyboard bar rises into place instead: it spans the screen, and

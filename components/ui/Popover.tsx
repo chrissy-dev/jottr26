@@ -114,7 +114,7 @@ export function Popover({
               maxWidth: 'calc(100vw - 16px)',
               visibility: position ? 'visible' : 'hidden',
             }}
-            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] ${className}`}
+            className={`pop-in fixed z-50 overflow-hidden rounded-xl border border-line bg-raised p-1 text-[13.5px] shadow-[var(--shadow-subtle)] pointer-coarse:text-[15px] ${className}`}
           >
             {children(close)}
           </div>,
@@ -140,7 +140,7 @@ export function MenuItem({
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={`flex w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left transition-colors pointer-coarse:py-2.5 hover:bg-[var(--hover)] ${
+      className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left transition-colors pointer-coarse:py-2 hover:bg-[var(--hover)] ${
         tone === 'danger' ? 'text-danger' : 'text-ink'
       }`}
     >

@@ -38,6 +38,7 @@ const worker = vm.createContext({
 vm.runInContext(readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8'), worker)
 const pruneAssets = worker.pruneAssets as (assets: FakeCache, shells: FakeCache, now?: number) => Promise<void>
 const cacheFirst = worker.cacheFirst as (event: unknown, name: string) => Promise<Response>
+const handleNavigation = worker.handleNavigation as (event: unknown, url: URL) => Promise<Response>
 
 const asset = (stored?: number) =>
   new Response('chunk', { headers: stored === undefined ? {} : { 'x-jottr-stored': String(stored) } })
@@ -93,5 +94,50 @@ describe('service worker asset cache', () => {
     await Promise.all(writes)
     assert.ok(Date.now() - (await stampOf(assets, '/_next/static/chunks/editor.js')) < 1000)
     assert.equal(await (await assets.match('/_next/static/chunks/editor.js'))!.text(), 'chunk')
+  })
+})
+
+describe('service worker navigation', () => {
+  /** One cache per name, shared by every open, as the real Cache API is. */
+  function storage() {
+    const named = new Map<string, FakeCache>()
+    const open = async (name: string) => named.get(name) ?? named.set(name, new FakeCache()).get(name)!
+    worker.caches = { open }
+    return open
+  }
+
+  const navigate = (path: string) => {
+    const waits: Promise<unknown>[] = []
+    const event = { request: { url: `${ORIGIN}${path}`, mode: 'navigate' }, waitUntil: (p: Promise<unknown>) => waits.push(p) }
+    return { served: handleNavigation(event, new URL(path, ORIGIN)), waits }
+  }
+
+  it('opens the workspace from the device without waiting on a network that barely answers', async () => {
+    const open = storage()
+    await (await open('jottr-shell-v3')).put('/app', new Response('cached shell'))
+    worker.fetch = () => new Promise(() => {})
+
+    const { served } = navigate('/app?page=abc')
+    const response = await Promise.race([served, new Promise<null>((resolve) => setTimeout(resolve, 100, null))])
+    assert.equal(await response?.text(), 'cached shell')
+  })
+
+  it('still keeps the network copy of the workspace for the next launch', async () => {
+    const open = storage()
+    await (await open('jottr-shell-v3')).put('/app', new Response('cached shell'))
+    worker.fetch = async () => new Response('new shell', { headers: { 'content-type': 'text/html' } })
+
+    const { served, waits } = navigate('/app')
+    assert.equal(await (await served).text(), 'cached shell')
+    await Promise.all(waits)
+    assert.equal(await (await (await open('jottr-shell-v3')).match('/app'))?.text(), 'new shell')
+  })
+
+  it('waits on the network for a workspace never cached', async () => {
+    storage()
+    worker.fetch = async () => new Response('from network', { headers: { 'content-type': 'text/html' } })
+
+    const { served } = navigate('/app')
+    assert.equal(await (await served).text(), 'from network')
   })
 })

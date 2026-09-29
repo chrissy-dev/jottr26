@@ -68,15 +68,16 @@ export function useRetrySync() {
   return { startSync, overlay: element };
 }
 
-export function SyncStatusRow({ onRetry }: { onRetry: () => void }) {
+/** The sync row's value in the settings: how the sync stands, and after a
+ *  failure a button to try again. */
+export function SyncStatus({ onRetry }: { onRetry: () => void }) {
   const status = useSyncStatus();
   const visual = look[status.phase];
 
   return (
-    <div className="flex items-center gap-2 py-1 text-[length:var(--body-size)]">
-      {/* Centred under the account row's icon. */}
-      <span aria-hidden="true" className={`mx-[3.5px] size-2 shrink-0 rounded-full ${visual.dot}`} />
-      <span className="flex-1 text-ink">{visual.label}</span>
+    <span className="flex items-center gap-2">
+      <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${visual.dot}`} />
+      <span className="text-muted">{visual.label}</span>
       {/* Syncing runs on its own; this is only for skipping the wait after a
           failure. Offline or signed out, a retry has nothing to reach. */}
       {status.phase === "error" && (
@@ -89,6 +90,6 @@ export function SyncStatusRow({ onRetry }: { onRetry: () => void }) {
           Retry now
         </button>
       )}
-    </div>
+    </span>
   );
 }

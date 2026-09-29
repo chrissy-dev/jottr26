@@ -152,6 +152,29 @@ describe('Tab over several items', () => {
   })
 })
 
+describe('Tab in a list item that can go no further', () => {
+  it('keeps the key, so focus stays in the page', () => {
+    const item = (text: string) => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })
+    const doc = {
+      type: 'doc',
+      content: [{ type: 'title', content: [{ type: 'text', text: 'N' }] }, { type: 'bulletList', content: [item('a'), item('b')] }],
+    }
+    // The caret in `a`, the first item: nothing above it to go under.
+    const instance = headlessEditor(doc, 7)
+    const extension = instance.extensionManager.extensions.find((candidate) => candidate.name === 'listItem')!
+    const keys = getExtensionField<() => Record<string, KeyboardShortcutCommand>>(extension, 'addKeyboardShortcuts', {
+      name: 'listItem',
+      options: extension.options,
+      storage: extension.storage,
+      editor: instance,
+      type: getSchemaTypeByName('listItem', instance.schema),
+    })()
+    const before = instance.state.doc
+    assert.equal(keys.Tab({ editor: instance }), true)
+    assert.ok(instance.state.doc.eq(before), 'the list is left as it was')
+  })
+})
+
 describe('list and table keys on a plain line', () => {
   it('decline without dispatching an empty edit through every plugin', () => {
     const line = { type: 'paragraph', content: [{ type: 'text', text: 'hi' }] }

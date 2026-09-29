@@ -9,6 +9,7 @@ const { searchPages } = await import('@/lib/db/search')
 const { openDatabase, closeDatabase } = await import('@/lib/db/dexie')
 const { createPage, deleteForever, refreshDerived } = await import('@/lib/db/pages')
 const { moveSearchTexts, readSearchTexts } = await import('@/lib/db/searchText')
+const { readEditedTimes } = await import('@/lib/db/editedAt')
 const { openDoc, releaseAll, whenPersisted, DOC_FIELD } = await import('@/lib/db/ydoc')
 const Y = await import('yjs')
 
@@ -64,6 +65,14 @@ describe('searchPages', () => {
     assert.deepEqual(ids, ['e', 'a', 'b', 'c'])
   })
 
+  it('counts typing kept apart from the row, when ranking equal matches', () => {
+    const edited = new Map([['c', 10]])
+    const ids = searchPages(pages, 'meeting', texts, edited).map((hit) => hit.page.id)
+    // Titles still rank above bodies; among title matches nothing moved.
+    assert.deepEqual(ids, ['a', 'b', 'c'])
+    assert.deepEqual(searchPages(pages, '  ', texts, edited)[0].page.id, 'c')
+  })
+
   it('quotes the surrounding text for a body match, so you can tell pages apart', () => {
     const hit = searchPages(pages, 'snacks', texts)[0]
     assert.equal(hit.page.id, 'c')
@@ -111,8 +120,12 @@ describe('page text for search', () => {
 
     assert.match((await readSearchTexts(db)).get(id) ?? '', /book the ferry/)
     assert.equal((await db.pages.get(id))?.searchText, undefined)
+    // The edit time too: on the row, it woke the sidebar's query every pause.
+    assert.ok(((await readEditedTimes(db)).get(id) ?? 0) > 0)
+    assert.equal((await db.pages.get(id))?.editedAt, undefined)
 
     await deleteForever(id)
     assert.equal((await readSearchTexts(db)).has(id), false)
+    assert.equal((await readEditedTimes(db)).has(id), false)
   })
 })

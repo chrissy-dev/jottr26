@@ -40,6 +40,15 @@ export function useSyncStatus() {
   return useContext(SyncStatusContext)
 }
 
+/** The server hands over a new session object each time the tab comes back
+ *  into view, the same session as before. Keeping the one already held stops
+ *  every reader of the workspace re-rendering on every switch back to the app.
+ *  Only the user is compared, as the user is all the app reads from one. */
+function keepIfSame(current: AuthSession | null, next: AuthSession | null) {
+  const same = current?.user.id === next?.user.id && current?.user.email === next?.user.email
+  return same ? current : next
+}
+
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [ready, setReady] = useState(false)
@@ -65,12 +74,12 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     // storage: that is a real sign-out, not an unreachable server.
     auth.getSession().then((next) => {
       if (cancelled) return
-      setSession(next ?? auth.storedSession())
+      setSession((current) => keepIfSame(current, next ?? auth.storedSession()))
       setReady(true)
     })
 
     const unsubscribe = auth.onSessionChange((next) => {
-      setSession(next ?? auth.storedSession())
+      setSession((current) => keepIfSame(current, next ?? auth.storedSession()))
       setReady(true)
     })
 
@@ -130,21 +139,23 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     engineRef.current?.stop()
     engineRef.current = null
     releaseAll()
-    // Local scope: a server-side revoke needs the network, and being unable to
-    // reach the server is not a reason to leave someone signed in on a device
-    // they are trying to hand back.
-    await auth.signOut().catch(() => undefined)
 
     // Notes are cloud-backed; leaving a copy in IndexedDB on a device that may
-    // be shared is not a trade worth making. Another tab holding the database
-    // open would make the delete wait, so it is given a deadline rather than
-    // being allowed to hang the sign-out.
+    // be shared is not a trade worth making. Erased first: signing out sends
+    // this tab to the login page, which would cut short a delete still under
+    // way. Another tab holding the database open would make the delete wait,
+    // so it is given a deadline rather than being allowed to hang the sign-out.
     if (id) {
       await Promise.race([
         eraseDatabase(id),
         new Promise((resolve) => setTimeout(resolve, 3000)),
       ])
     }
+
+    // Local scope: a server-side revoke needs the network, and being unable to
+    // reach the server is not a reason to leave someone signed in on a device
+    // they are trying to hand back.
+    await auth.signOut().catch(() => undefined)
   }, [userId])
 
   const retrySync = useCallback(async () => engineRef.current?.retryNow() ?? null, [])

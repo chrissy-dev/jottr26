@@ -33,7 +33,7 @@ function Gate() {
   }, [ready, session])
 
   if (!ready || !session) {
-    return <LoadingScreen label={ready ? 'Taking you to sign in…' : 'Opening Jottr…'} />
+    return <LoadingScreen label={ready ? 'Taking you to sign in…' : 'Loading Jottr…'} />
   }
 
   return <Workspace />

@@ -1001,10 +1001,13 @@ export class SyncEngine {
           const current = await this.db.pages.get(page.id)
           // Edited again while the request was in flight: leave it dirty.
           if (!current || current.updatedAt !== page.updatedAt) continue
+          const stamp = stamps.get(page.id)
+          // Both times take the server's, as a pull of the row would, so the
+          // overlap window's next pull finds nothing to write back.
           await this.db.pages.update(page.id, {
             dirty: 0,
             dirtyFields: [],
-            serverUpdatedAt: stamps.get(page.id) ?? current.serverUpdatedAt,
+            ...(stamp ? { updatedAt: stamp, serverUpdatedAt: stamp } : {}),
           })
         }
       })
@@ -1068,14 +1071,13 @@ export class SyncEngine {
 
       const result = await this.backend.pushDoc(state.pageId, bytesToBase64(bytes), base, signal)
 
-      // The server has no live page for this document. If it once did, the
-      // page was deleted for good on another device before this one heard,
-      // so drop it now. If it never did, the row has yet to be uploaded:
-      // leave the document dirty for the next sync.
-      if (result.applied && result.version === 0) {
-        if (page.serverUpdatedAt > 0) await forgetPages(this.db, [state.pageId])
-        break
-      }
+      // The server shows no live page for this document: it was deleted for
+      // good on another device, its row has yet to be uploaded, or the session
+      // lapsed mid-cycle and the push went out as the anon user, whom
+      // row-level security shows nothing. Only the first is a reason to drop
+      // it, and the tombstone the next pull reads says so; this answer alone
+      // cannot tell them apart. So the document stays dirty until then.
+      if (result.applied && result.version === 0) break
 
       if (result.applied) {
         // Absent when the server cannot say, and then nothing is recorded:

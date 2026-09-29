@@ -224,6 +224,48 @@ describe('finance mode', () => {
     }
   })
 
+  it('works out only the tables an edit reached, and ends up as if it had done them all', () => {
+    /** Every decoration, as where it sits and which totals it shows. */
+    const drawn = (state: EditorState) => {
+      const plugin = state.plugins[0]
+      const set = plugin.props.decorations?.call(plugin, state) as DecorationSet
+      return set.find().map((d) => `${d.from}-${d.to}:${(d.spec as { key?: string }).key ?? 'money'}`).sort()
+    }
+    const fresh = (state: EditorState) => drawn(EditorState.create({ doc: state.doc, schema, plugins: [financePlugin()] }))
+    const same = (state: EditorState, what: string) => assert.deepEqual(drawn(state), fresh(state), what)
+
+    let state = financePage([['Rent', '1200'], ['Food', '300']])
+    same(state, 'as built')
+
+    state = state.apply(state.tr.insertText('notes', 2 + 'Books'.length + 1))
+    same(state, 'typing in a line above the table')
+
+    const totals = (state: EditorState) => drawn(state).find((entry) => entry.includes('finance-total'))
+    const before = totals(state)
+    state = state.apply(state.tr.insertText('5', cellAt(state, 2, 1) + 2 + '300'.length))
+    assert.notEqual(totals(state), before, 'the total moves with the amount')
+    same(state, 'typing an amount into a cell')
+
+    const cell = cellAt(state, 1, 0) + 2
+    state = state.apply(state.tr.addMark(cell, cell + 'Rent'.length, schema.marks.bold.create()))
+    same(state, 'bolding a label')
+
+    const second = createTable(schema, 2, 1, true)
+    state = state.apply(state.tr.insert(state.doc.content.size, second.type.create({ ...second.attrs, finance: true }, second.content)))
+    same(state, 'adding another finance table')
+
+    const { node, start } = locate(state)
+    state = state.apply(state.tr.setNodeMarkup(start - 1, null, { ...node.attrs, finance: false }))
+    same(state, 'switching finance mode off')
+
+    state = state.apply(state.tr.replaceWith(0, state.doc.content.size, state.doc.content))
+    same(state, 'the whole page replaced, as an edit from another device arrives')
+
+    const { node: table, start: at } = locate(state)
+    state = state.apply(state.tr.delete(at - 1, at - 1 + table.nodeSize))
+    same(state, 'deleting a table')
+  })
+
   it('carries finance mode to the other device', async () => {
     const { DOC_FIELD } = await import('@/lib/db/ydoc')
     const { yXmlFragmentToProsemirrorJSON } = await import('y-prosemirror')

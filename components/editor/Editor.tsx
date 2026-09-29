@@ -17,7 +17,7 @@ import { isListControl, SubpageList } from './SubpageList'
 import { FormatMenu } from './FormatMenu'
 import { MobileToolbar } from './MobileToolbar'
 import { TableMenu } from './TableMenu'
-import { openDoc, type DocHandle } from '@/lib/db/ydoc'
+import { openDoc, refreshFromDisk, type DocHandle } from '@/lib/db/ydoc'
 import { convertChecklists } from '@/lib/db/checklists'
 import { repairSubpageTitles } from '@/lib/db/subpages'
 import { useDocReady } from '@/lib/db/hooks'
@@ -46,14 +46,20 @@ function Loader({ pageId }: { pageId: string }) {
 
   useEffect(() => {
     let cancelled = false
-    openDoc(pageId).then(
-      (loaded) => {
-        if (!cancelled) setHandle(loaded)
-      },
-      (error: unknown) => {
-        if (!cancelled) setFailure(error ?? new Error('Could not open this page'))
-      },
-    )
+    openDoc(pageId)
+      // A document this tab already had open moves on only through other
+      // tabs' relays, which a suspended or back-forward cached tab misses, so
+      // it is caught up with the disk before it is shown. Cheap when it is
+      // already current; a failure leaves it as it was rather than unshown.
+      .then((loaded) => refreshFromDisk(loaded).then(() => loaded, () => loaded))
+      .then(
+        (loaded) => {
+          if (!cancelled) setHandle(loaded)
+        },
+        (error: unknown) => {
+          if (!cancelled) setFailure(error ?? new Error('Could not open this page'))
+        },
+      )
     return () => {
       cancelled = true
     }

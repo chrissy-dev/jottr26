@@ -33,7 +33,7 @@ export function FormatMenu({ editor, pageId }: { editor: Editor; pageId: string 
       editor={editor}
       options={BUBBLE_OPTIONS}
       shouldShow={shouldShow}
-      className="flex items-center gap-1 rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-pop)] pop-in"
+      className="flex items-center gap-1 rounded-xl border border-line bg-raised p-1 shadow-[var(--shadow-subtle)] pop-in"
     >
       {link.open ? (
         <LinkPicker

@@ -198,7 +198,7 @@ export function SubpageList({ editor, extension, node, getPos, updateAttributes 
       onDragEnd={end}
       onClick={(event) => follow(event, page.id)}
     >
-      <Icon name="file" size={15} className="text-faint" />
+      <Icon name="file" size={15} className="text-muted" />
       {/* Not draggable itself, so a drag picks up the whole entry
           rather than the link's address. */}
       <a href={pageHref(page.id)} draggable={false}>

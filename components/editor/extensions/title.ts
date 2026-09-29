@@ -92,11 +92,16 @@ export const Title = Node.create({
 
   addKeyboardShortcuts() {
     const openLine = pm(this.editor, openBodyLine(this.name))
+    // Shift too: at the start of a line iOS has Shift on, to capitalise the
+    // first word, so its delete key arrives as Shift-Backspace there — which
+    // Tiptap's own keymap takes as Backspace, selecting the whole title.
+    const backspace = pm(this.editor, backspaceIntoTitle(this.name))
     return {
       Enter: openLine,
       'Mod-Enter': openLine,
       Tab: pm(this.editor, leaveTitle(this.name)),
-      Backspace: pm(this.editor, backspaceIntoTitle(this.name)),
+      Backspace: backspace,
+      'Shift-Backspace': backspace,
     }
   },
 })

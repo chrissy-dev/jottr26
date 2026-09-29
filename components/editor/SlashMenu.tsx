@@ -60,7 +60,7 @@ export function SlashMenu(props: SlashListProps) {
 
   return (
     <div
-      className="fixed z-50 overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--shadow-pop)] pop-in"
+      className="fixed z-50 overflow-hidden rounded-xl border border-line bg-raised shadow-[var(--shadow-subtle)] pop-in"
       style={{ top: position.top, left: position.left, width: WIDTH }}
     >
       <SlashList {...props} className="max-h-[312px] p-1.5" />
@@ -97,7 +97,7 @@ export function SlashList({
       aria-label="Insert block"
       // A drag that reaches the end of the list stops there rather than
       // carrying on into the page behind it.
-      className={`scroll-thin relative overflow-y-auto overscroll-contain ${className}`}
+      className={`scrollbar-none relative overflow-y-auto overscroll-contain ${className}`}
     >
       {state.items.map((item, index) => {
         const active = index === state.index
